@@ -3,13 +3,19 @@ package org.panda.resource.signednetwork;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
-import org.biopax.paxtools.pattern.miner.BlacklistGenerator;
+import org.biopax.paxtools.model.level3.RelationshipXref;
+import org.biopax.paxtools.model.level3.XReferrable;
+import org.biopax.paxtools.model.level3.Xref;
+import org.biopax.paxtools.pattern.miner.IDFetcher;
 import org.biopax.paxtools.pattern.miner.SIFInteraction;
 import org.biopax.paxtools.pattern.miner.SIFSearcher;
 import org.biopax.paxtools.pattern.util.Blacklist;
 import org.panda.utility.Kronometre;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -22,7 +28,7 @@ public class Generator
 		String dir = "/home/babur/Documents/PC/";
 		SimpleIOHandler h = new SimpleIOHandler(BioPAXLevel.L3);
 		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons.8.Detailed.BIOPAX.owl"));
-//		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/PANTHER.owl"));
+//		Model model = h.convertFromOWL(new FileInputStream(dir + "temp.owl"));
 		System.out.println("Model size = " + model.getObjects().size());
 //		BlacklistGenerator gen = new BlacklistGenerator();
 //		Blacklist blacklist = gen.generateBlacklist(model);
@@ -30,6 +36,7 @@ public class Generator
 		Blacklist blacklist = new Blacklist(dir + "blacklist.txt");
 
 		generate(model, blacklist, dir + "SignedPC.sif");
+//		generate(model, blacklist, dir + "temp.sif");
 	}
 
 	public static void generate(Model model, Blacklist blacklist, String outFile) throws IOException
@@ -40,29 +47,45 @@ public class Generator
 
 		// prepare phospho-graph
 
-		searcher = new SIFSearcher(new PP1(), new PP2(), new PP3(), new PP4());
+		IDFetcher idFetcher = ele ->
+		{
+			if (ele instanceof XReferrable)
+			{
+				for (Xref xref : ((XReferrable) ele).getXref())
+				{
+					if (xref instanceof RelationshipXref && xref.getDb() != null &&
+						xref.getDb().equalsIgnoreCase("hgnc symbol") && xref.getId() != null)
+					{
+						return Collections.singleton(xref.getId());
+					}
+				}
+			}
+			return Collections.emptySet();
+		};
+
+		searcher = new SIFSearcher(idFetcher, new PP1(), new PP2(), new PP3(), new PP4());
 		searcher.setBlacklist(blacklist);
 		Set<SignedSIFInteraction> pp = (Set<SignedSIFInteraction>) (Set<?>) searcher.searchSIF(model);
 
-		System.out.println("Positive phosho = " + pp.size());
+		System.out.println("Positive phospho = " + pp.size());
 
-		searcher = new SIFSearcher(new PN1(), new PN2(), new PN3(), new PN4());
+		searcher = new SIFSearcher(idFetcher, new PN1(), new PN2(), new PN3(), new PN4());
 		searcher.setBlacklist(blacklist);
 		Set<SignedSIFInteraction> pn = (Set<SignedSIFInteraction>) (Set<?>) searcher.searchSIF(model);
 
-		System.out.println("Negative phosho = " + pn.size());
+		System.out.println("Negative phospho = " + pn.size());
 
 		decideConflictingPhosphorylation(pp, pn);
 
 		// prepare expression graph
 
-		searcher = new SIFSearcher(new EP1(), new EP2());
+		searcher = new SIFSearcher(idFetcher, new EP1(), new EP2());
 		searcher.setBlacklist(blacklist);
 		Set<SIFInteraction> ep = searcher.searchSIF(model);
 
 		System.out.println("Positive expression = " + ep.size());
 
-		searcher = new SIFSearcher(new EN1(), new EN2());
+		searcher = new SIFSearcher(idFetcher, new EN1(), new EN2());
 		searcher.setBlacklist(blacklist);
 		Set<SIFInteraction> en = searcher.searchSIF(model);
 

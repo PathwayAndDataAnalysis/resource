@@ -74,6 +74,9 @@ public class ChEBI extends FileServer
 
 	public static void main(String[] args)
 	{
-		System.out.println(get().getName("CHEBI:179"));
+		for (String s : "CHEBI:17295, CHEBI:16977, CHEBI:17196, CHEBI:17191, CHEBI:16414, CHEBI:17203, CHEBI:16828, CHEBI:15603, CHEBI:16015".split(", "))
+		{
+			System.out.println(s + "\t" + get().getName(s));
+		}
 	}
 }

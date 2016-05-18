@@ -9,6 +9,7 @@ import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
+import org.biopax.paxtools.pattern.util.Blacklist;
 import org.panda.utility.ContentSet;
 import org.panda.utility.Kronometre;
 import org.panda.utility.statistics.FDR;
@@ -23,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Ozgun Babur
@@ -34,6 +36,8 @@ public class PCPathway extends FileServer
 
 	private Map<String, Set<String>> gene2pathway;
 	private Map<String, Set<String>> pathway2gene;
+	private Map<String, Set<String>> chem2pathway;
+	private Map<String, Set<String>> pathway2chem;
 	private Map<String, String> pathway2name;
 	private Map<String, String> pathway2resource;
 
@@ -54,6 +58,8 @@ public class PCPathway extends FileServer
 	{
 		pathway2gene = new HashMap<>();
 		gene2pathway = new HashMap<>();
+		chem2pathway = new HashMap<>();
+		pathway2chem = new HashMap<>();
 		pathway2name = new HashMap<>();
 		pathway2resource = new HashMap<>();
 
@@ -70,13 +76,22 @@ public class PCPathway extends FileServer
 				if (groups.contains(group)) return;
 				groups.add(group);
 
-				pathway2gene.put(token[0], group);
+				Set<String> chems = Arrays.asList(token).subList(3, token.length).stream()
+					.filter(s -> s.startsWith("CHEBI:")).collect(Collectors.toSet());
 
-				for (int i = 2; i < token.length; i++)
-				{
-					if (!gene2pathway.containsKey(token[i])) gene2pathway.put(token[i], new HashSet<>());
-					gene2pathway.get(token[i]).add(token[0]);
-				}
+				Set<String> genes = Arrays.asList(token).subList(3, token.length).stream()
+					.filter(s -> !s.startsWith("CHEBI:")).collect(Collectors.toSet());
+
+				pathway2gene.put(token[0], genes);
+				pathway2chem.put(token[0], chems);
+
+				genes.stream().filter(gene -> !gene2pathway.containsKey(gene))
+					.forEach(gene -> gene2pathway.put(gene, new HashSet<>()));
+				genes.stream().forEach(gene -> gene2pathway.get(gene).add(token[0]));
+
+				chems.stream().filter(chem -> !chem2pathway.containsKey(chem))
+					.forEach(chem -> chem2pathway.put(chem, new HashSet<>()));
+				chems.stream().forEach(chem -> chem2pathway.get(chem).add(token[0]));
 			}
 		});
 
@@ -93,6 +108,12 @@ public class PCPathway extends FileServer
 	public Set<String> getGenes(String pathwayID)
 	{
 		if (pathway2gene.containsKey(pathwayID)) return pathway2gene.get(pathwayID);
+		else return Collections.emptySet();
+	}
+
+	public Set<String> getChems(String pathwayID)
+	{
+		if (pathway2chem.containsKey(pathwayID)) return pathway2chem.get(pathwayID);
 		else return Collections.emptySet();
 	}
 
@@ -116,79 +137,98 @@ public class PCPathway extends FileServer
 
 	/**
 	 * Gets the enrichment pvals and pval limits.
-	 * @param genes query
-	 * @param background if there is any
+	 * @param molecules query
+	 * @param backgroundMols if there is any
 	 * @return two maps, first is for pvals, second is for limits
 	 */
-	public Map<String, Double>[] getEnrichmentPvals(Collection<String> genes,
-		Collection<String> background, int minMemberSize, int maxMemberSize)
+	public Map<String, Double>[] getEnrichmentPvals(Collection<String> molecules,
+		Collection<String> backgroundMols, int minMemberSize, int maxMemberSize)
 	{
-		if (background == null)
-		{
-			background = new HashSet<>(gene2pathway.keySet());
-			if (!background.containsAll(genes))
-			{
-				Set<String> set = new HashSet<String>(genes);
-				set.removeAll(background);
+		if (backgroundMols != null && !backgroundMols.containsAll(molecules)) throw new IllegalArgumentException(
+			"Background molecules have to contain all the selected molecules.");
 
-				genes = new HashSet<>(genes);
-				genes.removeAll(set);
-				System.out.println("Removed " + set.size() + " unknown genes: " + set);
-				System.out.println("Using " + genes.size() + ": " + genes);
-			}
+		Set<String> mols = new HashSet<>(molecules);
+		Set<String> genes = mols.stream().filter(entity -> !entity.startsWith("CHEBI:")).collect(Collectors.toSet());
+		Set<String> chems = mols.stream().filter(entity -> entity.startsWith("CHEBI:")).collect(Collectors.toSet());
+
+		Set<String> background = new HashSet<>();
+		if (!genes.isEmpty()) background.addAll(gene2pathway.keySet());
+		if (!chems.isEmpty()) background.addAll(chem2pathway.keySet());
+
+		if (backgroundMols != null) background.retainAll(backgroundMols);
+
+		if (!background.containsAll(mols))
+		{
+			Set<String> excess = new HashSet<>(mols);
+			excess.removeAll(background);
+
+			mols.removeAll(excess);
+			System.out.println("Removed " + excess.size() + " unknown genes: " + excess);
+			System.out.println("Using " + mols.size() + ": " + mols);
 		}
 
-		if (!background.containsAll(genes)) throw new IllegalArgumentException(
-			"Background genes have to contain all the selected genes.");
-
-		Map<String, Integer> selectionCnt = count(genes);
-		Map<String, Integer> backgroundCnt = count(background);
+		Map<String, Integer> selectionGeneCnt = count(genes, pathway2gene);
+		Map<String, Integer> backgroundGeneCnt = count(background, pathway2gene);
+		Map<String, Integer> selectionChemCnt = count(chems, pathway2chem);
+		Map<String, Integer> backgroundChemCnt = count(background, pathway2chem);
 
 		Map<String, Double> mapP = new HashMap<>();
 		Map<String, Double> mapL = new HashMap<>();
 
-		for (String pathway : selectionCnt.keySet())
+		Stream.concat(selectionGeneCnt.keySet().stream(), selectionChemCnt.keySet().stream()).distinct().forEach(pathway ->
 		{
-			int size = pathway2gene.get(pathway).size();
-			if (size < minMemberSize || size > maxMemberSize) continue;
+			int pathwaySize = 0;
+			if (!genes.isEmpty()) pathwaySize += pathway2gene.get(pathway).size();
+			if (!chems.isEmpty()) pathwaySize += pathway2chem.get(pathway).size();
+			if (pathwaySize < minMemberSize || pathwaySize > maxMemberSize) return;
 
-			double pval = FishersExactTest.calcEnrichmentPval(background.size(),
-				backgroundCnt.get(pathway), genes.size(), selectionCnt.get(pathway));
+			int size = background.size();
+			int featuredOverall = 0;
+			if (!genes.isEmpty()) featuredOverall += backgroundGeneCnt.get(pathway);
+			if (!chems.isEmpty()) featuredOverall += backgroundChemCnt.get(pathway);
+			int selected = mols.size();
+			int featuredSelected = 0;
+			if (!genes.isEmpty()) featuredSelected += selectionGeneCnt.get(pathway);
+			if (!chems.isEmpty()) featuredSelected += selectionChemCnt.get(pathway);
 
-			double limit = FishersExactTest.calcEnrichmentPval(background.size(),
-				backgroundCnt.get(pathway), genes.size(),
-				Math.min(backgroundCnt.get(pathway), genes.size()));
+			double pval = FishersExactTest.calcEnrichmentPval(size, featuredOverall, selected, featuredSelected);
+
+			int maxPossibleHit = 0;
+			if (!genes.isEmpty()) maxPossibleHit += Math.min(backgroundGeneCnt.get(pathway), genes.size());
+			if (!chems.isEmpty()) maxPossibleHit += Math.min(backgroundChemCnt.get(pathway), chems.size());
+
+			double limit = FishersExactTest.calcEnrichmentPval(size, featuredOverall, selected, maxPossibleHit);
 
 			mapP.put(pathway, pval);
 			mapL.put(pathway, limit);
-		}
+		});
 
 		return new Map[]{mapP, mapL};
 	}
 
-	private Map<String, Integer> count(Collection<String> genes)
+	private Map<String, Integer> count(Collection<String> mols, Map<String, Set<String>> pathway2X)
 	{
 		Map<String, Integer> cnt = new HashMap<>();
 
-		for (String pathway : pathway2gene.keySet())
+		for (String pathway : pathway2X.keySet())
 		{
-			Set<String> mems = new HashSet<>(pathway2gene.get(pathway));
-			mems.retainAll(genes);
-			if (!mems.isEmpty()) cnt.put(pathway, mems.size());
+			Set<String> mems = new HashSet<>(pathway2X.get(pathway));
+			mems.retainAll(mols);
+			cnt.put(pathway, mems.size());
 		}
 		return cnt;
 	}
 
-	public List<String> getEnrichedPathways(Collection<String> genes,
+	public List<String> getEnrichedPathways(Collection<String> molecules,
 		Collection<String> background, double fdrThr)
 	{
-		return getEnrichedPathways(genes, background, fdrThr, 3, 500);
+		return getEnrichedPathways(molecules, background, fdrThr, 3, 500);
 	}
 
-	public List<String> getEnrichedPathways(Collection<String> genes,
+	public List<String> getEnrichedPathways(Collection<String> molecules,
 		Collection<String> background, double fdrThr, int minMemberSize, int maxMemberSize)
 	{
-		Map<String, Double>[] map = getEnrichmentPvals(genes, background, minMemberSize, maxMemberSize);
+		Map<String, Double>[] map = getEnrichmentPvals(molecules, background, minMemberSize, maxMemberSize);
 		if (fdrThr < 0)
 		{
 			fdrThr = FDR.decideBestFDR_BH(map[0], map[1]);
@@ -197,18 +237,21 @@ public class PCPathway extends FileServer
 		return FDR.select(map[0], map[1], fdrThr).stream().collect(Collectors.toList());
 	}
 
-	public Map<String, Double> getEnrichmentQvals(Collection<String> genes,
+	public Map<String, Double> getEnrichmentQvals(Collection<String> molecules,
 		Collection<String> background, int minMemberSize, int maxMemberSize)
 	{
-		Map<String, Double>[] map = getEnrichmentPvals(genes, background, minMemberSize, maxMemberSize);
+		Map<String, Double>[] map = getEnrichmentPvals(molecules, background, minMemberSize, maxMemberSize);
 		return FDR.getQVals(map[0], map[1]);
 	}
 
-	public void writeEnrichmentResults(Set<String> genes, int minMemberSize, int maxMemberSize, String filename)
+	public void writeEnrichmentResults(Set<String> molecules, int minMemberSize, int maxMemberSize, String filename)
 		throws IOException
 	{
-		final Map<String, Double>[] pvals = getEnrichmentPvals(genes, null, minMemberSize, maxMemberSize);
-		Map<String, Double> qvals = getEnrichmentQvals(genes, null, minMemberSize, maxMemberSize);
+		final Map<String, Double>[] pvals = getEnrichmentPvals(molecules, null, minMemberSize, maxMemberSize);
+		Map<String, Double> qvals = getEnrichmentQvals(molecules, null, minMemberSize, maxMemberSize);
+
+		boolean hasGene = molecules.stream().anyMatch(s -> !s.startsWith("CHEBI:"));
+		boolean hasChem = molecules.stream().anyMatch(s -> s.startsWith("CHEBI:"));
 
 		List<String> ids = new ArrayList<>(qvals.keySet());
 		Collections.sort(ids, (o1, o2) -> pvals[0].get(o1).compareTo(pvals[0].get(o2)));
@@ -216,24 +259,44 @@ public class PCPathway extends FileServer
 		BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
 
 		writer.write("# Pathway name: Name of the pathway as given by the original pathway database.\n");
+		writer.write("# Resource: The original database that this pathway was defined.\n");
+		writer.write("# Pathway Commons ID: ID of the pathway in Pathway Commons database.\n");
 		writer.write("# P-value: Enrichment p-value of the pathway calculated by Fisher's exact test.\n");
 		writer.write("# Q-value: Estimated FDR (false discovery rate) if this p-value is used as cutoff threshold.\n");
 		writer.write("# Hit size: Number of query genes that overlaps with this pathway.\n");
 		writer.write("# Pathway size: Number of genes in this pathway.\n");
-		writer.write("# Genes contributed enrichment: Names of query genes that overlaps with this pathway.\n");
-		writer.write("Pathway name\tResource\tPathway Commons ID\tP-value\tQ-value\tHit size\tPathway size\tGenes contributed enrichment");
+		writer.write("# Molecules contributed enrichment: Names of query genes that overlaps with this pathway.\n");
+		writer.write("Pathway name\tResource\tPathway Commons ID\tP-value\tQ-value\tHit size\tPathway size\tMolecules contributed enrichment");
 		for (String id : ids)
 		{
 			if (pvals[0].get(id) > 0.05) break;
 
-			Set<String> g = new HashSet<>(getGenes(id));
+			Set<String> g = new HashSet<>();
+			if (hasGene) g.addAll(getGenes(id));
+			if (hasChem) g.addAll(getChems(id));
 			int allSize = g.size();
-			g.retainAll(genes);
+			g.retainAll(molecules);
 			int hitSize = g.size();
 			writer.write("\n" + getName(id) + "\t" + getResource(id) + "\t" + id + "\t" + pvals[0].get(id) + "\t" +
-				qvals.get(id) + "\t" + hitSize + "\t" + allSize + "\t" + g);
+				qvals.get(id) + "\t" + hitSize + "\t" + allSize + "\t" + getMolsInString(g));
 		}
 		writer.close();
+	}
+
+	private String getMolsInString(Set<String> mols)
+	{
+		if (mols.isEmpty()) return "";
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for (String mol : mols)
+		{
+			if (first) first = false;
+			else sb.append(", ");
+
+			String name = ChEBI.get().getName(mol);
+			sb.append(name == null ? mol : name);
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -242,7 +305,7 @@ public class PCPathway extends FileServer
 	 */
 	public TreeMap<String, Integer> getSortedPathways(Collection<String> genes)
 	{
-		final Map<String, Integer> map = new HashMap<String, Integer>();
+		final Map<String, Integer> map = new HashMap<>();
 
 		for (String gene : genes)
 		{
@@ -253,7 +316,7 @@ public class PCPathway extends FileServer
 			}
 		}
 
-		TreeMap<String, Integer> sorted = new TreeMap<String, Integer>((o1, o2) -> {
+		TreeMap<String, Integer> sorted = new TreeMap<>((o1, o2) -> {
 			return map.get(o2).compareTo(map.get(o1));
 		});
 
@@ -279,11 +342,13 @@ public class PCPathway extends FileServer
 	{
 		Kronometre k = new Kronometre();
 		Map<String, Set<String>> pathway2gene = new ConcurrentHashMap<>();
+		Map<String, Set<String>> pathway2chem = new ConcurrentHashMap<>();
 		Map<String, String> pathway2name = new ConcurrentHashMap<>();
 		Map<String, String> pathway2resource = new ConcurrentHashMap<>();
 
 		SimpleIOHandler h = new SimpleIOHandler();
 		Model model = h.convertFromOWL(new FileInputStream("/home/babur/Documents/PC/PathwayCommons.8.Detailed.BIOPAX.owl"));
+		Blacklist blacklist = new Blacklist("/home/babur/Documents/PC/blacklist.txt");
 
 		System.out.println("Loaded BioPAX model");
 		k.print();
@@ -291,7 +356,7 @@ public class PCPathway extends FileServer
 
 		model.getObjects(Pathway.class).parallelStream().forEach(pathway ->
 		{
-			String id = pathway.getRDFId();
+			String id = pathway.getUri();
 			String name = pathway.getDisplayName();
 
 			if (name == null || name.isEmpty()) return;
@@ -304,21 +369,22 @@ public class PCPathway extends FileServer
 
 			Model m = excise(model, pathway);
 			Set<String> syms = collectGeneSymbols(m);
+			Set<String> chems = collectChemicals(m, blacklist);
 
-//			Set<String> syms = collectSymbols(pathway, model);
-
-			if (syms.size() < 3) return;
+			if (syms.size() + chems.size() < 3) return;
 
 			if (!pathway2gene.containsKey(id)) pathway2gene.put(id, new HashSet<>());
-
 			syms.forEach(pathway2gene.get(id)::add);
+
+			if (!pathway2chem.containsKey(id)) pathway2chem.put(id, new HashSet<>());
+			chems.forEach(pathway2chem.get(id)::add);
 		});
-		writeResources(pathway2gene, pathway2name, pathway2resource);
+		writeResources(pathway2gene, pathway2chem, pathway2name, pathway2resource);
 		k.print();
 	}
 
-	private static void writeResources(Map<String, Set<String>> pathway2gene, Map<String, String> pathway2name,
-		Map<String, String> pathway2resource) throws IOException
+	private static void writeResources(Map<String, Set<String>> pathway2gene, Map<String, Set<String>> pathway2chem,
+		Map<String, String> pathway2name, Map<String, String> pathway2resource) throws IOException
 	{
 		BufferedWriter writer = new BufferedWriter(new FileWriter("../repo/resource-files/" + FILE));
 
@@ -333,6 +399,12 @@ public class PCPathway extends FileServer
 			{
 				writer.write("\t" + sym);
 			}
+
+			for (String chem : pathway2chem.get(id))
+			{
+				writer.write("\t" + chem);
+			}
+
 			writer.write("\n");
 		}
 		writer.close();
@@ -351,32 +423,27 @@ public class PCPathway extends FileServer
 
 	private static Set<String> collectGeneSymbols(Model model)
 	{
-		Set<String> symbols = new HashSet<>();
-
-		for (EntityReference er : model.getObjects(EntityReference.class))
-		{
-			for (Xref xref : er.getXref())
-			{
-				if (xref.getDb() == null) continue;
-				if (xref.getDb().equalsIgnoreCase("HGNC SYMBOL"))
-				{
-					String s = HGNC.get().getSymbol(xref.getId());
-					if (s != null) symbols.add(s);
-				}
-			}
-		}
-		return symbols;
+		return model.getObjects(EntityReference.class).stream()
+			.map(EntityReference::getXref)
+			.flatMap(Collection::stream)
+			.filter(x -> x.getDb() != null && x.getDb().equalsIgnoreCase("HGNC Symbol"))
+			.map(Xref::getId)
+			.filter(Objects::nonNull)
+			.map(id -> HGNC.get().getSymbol(id))
+			.filter(Objects::nonNull)
+			.collect(Collectors.toSet());
 	}
 
-	private static Set<String> collectSymbols(Pathway pathway, Model model)
+	private static Set<String> collectChemicals(Model model, Blacklist blacklist)
 	{
-		return new Completer(SimpleEditorMap.L3).complete(
-			new HashSet<BioPAXElement>(new PathAccessor("Pathway/pathwayComponent*:Interaction").getValueFromBean(pathway)),
-			model).stream()
-				.filter(o -> o instanceof EntityReference).map(o -> (EntityReference) o)
-				.map(XReferrable::getXref).flatMap(Collection::stream)
-				.filter(xr -> xr.getDb() != null && xr.getDb().equalsIgnoreCase("hgnc symbol"))
-				.map(xr -> HGNC.get().getSymbol(xr.getId())).filter(s -> s != null)
-				.collect(Collectors.toSet());
+		return model.getObjects(EntityReference.class).stream()
+			.filter(er -> !blacklist.getListed().contains(er.getUri()))
+			.map(EntityReference::getXref)
+			.flatMap(Collection::stream)
+			.filter(x -> x.getDb() != null && x.getDb().equalsIgnoreCase("ChEBI"))
+			.map(Xref::getId)
+			.filter(Objects::nonNull)
+			.filter(id -> id.startsWith("CHEBI:"))
+			.collect(Collectors.toSet());
 	}
 }

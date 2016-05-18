@@ -4,6 +4,7 @@ import org.panda.resource.tcga.RPPAData;
 import org.panda.utility.TermCounter;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -27,7 +28,7 @@ public class PhosphoSitePlus extends FileServer
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{"Regulatory_sites", "manually-curated.sites.txt"};
+		return new String[]{"Regulatory_sites", "manually-curated-sites.txt"};
 	}
 
 	public Integer getEffect(String gene, String site)
@@ -113,7 +114,8 @@ public class PhosphoSitePlus extends FileServer
 		typeMap = new HashMap<>();
 		actualMap = new HashMap<>();
 
-		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0]))).skip(4).map(line -> line.split("\t"))
+		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0])), Charset.forName("windows-31j")).skip(4)
+			.map(line -> line.split("\t"))
 			.filter(token -> token.length >= 13 && token[6].equals("human") &&
 				token[8].equals("PHOSPHORYLATION") && HGNC.get().getSymbol(token[4]) != null)
 			.forEach(token -> {
@@ -178,7 +180,7 @@ public class PhosphoSitePlus extends FileServer
 
 	void printUniqueAA()
 	{
-		Set<String> sites = new HashSet<String>();
+		Set<String> sites = new HashSet<>();
 		for (String gene : typeMap.keySet())
 		{
 			sites.addAll(typeMap.get(gene).keySet());
@@ -205,7 +207,7 @@ public class PhosphoSitePlus extends FileServer
 
 	public Set<Integer> getEffects(RPPAData data, int proximityThreshold)
 	{
-		Set<Integer> found = new HashSet<Integer>();
+		Set<Integer> found = new HashSet<>();
 
 		for (String gene : data.sites.keySet())
 		{
@@ -254,10 +256,10 @@ public class PhosphoSitePlus extends FileServer
 //		{
 //			printSites(list.get(i));
 //		}
-		psp.printSites("EIF4B");
+		psp.printSites("GSK3A");
 //		printUniqueAA();
 
-//		List<Integer> dists = new ArrayList<Integer>();
+//		List<Integer> dists = new ArrayList<>();
 //		for (String gene : typeMap.keySet())
 //		{
 //			Map<String, Integer> sites = typeMap.get(gene);
