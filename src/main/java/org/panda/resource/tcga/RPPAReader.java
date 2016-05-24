@@ -159,7 +159,7 @@ public class RPPAReader
 
 		if (additionalAnnotation.containsKey(id)) return additionalAnnotation.get(id);
 
-		List<String> pSites = new ArrayList<String>();
+		List<String> pSites = new ArrayList<>();
 
 		if (id.contains("_p"))
 		{
@@ -214,7 +214,7 @@ public class RPPAReader
 		for (RPPAData stub : stubs)
 		{
 			RPPAData d = (RPPAData) stub.clone();
-			d.vals = new double[][]{getValues(d.id, samples)};
+			d.vals = getValues(d.id, samples);
 			set.add(d);
 		}
 

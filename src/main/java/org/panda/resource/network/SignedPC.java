@@ -1,6 +1,7 @@
 package org.panda.resource.network;
 
 import org.biopax.paxtools.pattern.miner.SIFType;
+import org.panda.resource.ResourceDirectory;
 import org.panda.resource.signednetwork.SignedType;
 import org.panda.utility.CollectionUtil;
 import org.panda.utility.graph.Graph;
@@ -32,7 +33,7 @@ public class SignedPC extends PathwayCommons
 
 	protected String getPrivateDirectory()
 	{
-		return getResourceFilesLocation() + File.separator + "SignedPC/";
+		return ResourceDirectory.get() + File.separator + "SignedPC/";
 	}
 
 	public Graph getGraph(SIFType... types)

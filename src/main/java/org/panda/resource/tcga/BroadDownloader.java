@@ -234,10 +234,10 @@ public class BroadDownloader
 
 	public static void main(String[] args) throws IOException
 	{
-//		List<String> codes = getStudyCodes("2015_06_01");
+//		List<String> codes = getStudyCodes("2015_08_21");
 //		System.out.println(codes);
 
-//		download("2015_08_21", "/home/babur/Documents/Temp", "BRCA");
+//		download("2015_08_21", "/home/babur/Documents/TCGA/BRCA", "BRCA");
 
 		downloadAll("2015_08_21", "/home/babur/Documents/TCGA");
 	}

@@ -3,6 +3,7 @@ package org.panda.resource.network;
 import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.panda.resource.FileServer;
+import org.panda.resource.ResourceDirectory;
 import org.panda.utility.StringUtil;
 import org.panda.utility.graph.Graph;
 import org.panda.utility.graph.GraphList;
@@ -40,7 +41,7 @@ public class PathwayCommons extends FileServer
 
 	protected String getPrivateDirectory()
 	{
-		return getResourceFilesLocation() + File.separator + "PC/";
+		return ResourceDirectory.get() + File.separator + "PC/";
 	}
 
 	protected boolean fileExists(SIFType... types)

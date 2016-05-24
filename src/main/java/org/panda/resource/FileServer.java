@@ -15,8 +15,6 @@ import java.util.stream.Stream;
  */
 public abstract class FileServer
 {
-	public static final String RESOURCE_DIR_NAME = ".panda";
-
 	public abstract String[] getLocalFilenames();
 
 	/**
@@ -56,7 +54,7 @@ public abstract class FileServer
 
 	public boolean downloadResources()
 	{
-		String loc = getResourceFilesLocation();
+		String loc = ResourceDirectory.get();
 		String[] url = getDistantURLs();
 		String[] filename = getLocalFilenames();
 
@@ -96,7 +94,7 @@ public abstract class FileServer
 
 	public Stream<String> getResourceAsStream(String filename) throws IOException
 	{
-		return Files.lines(Paths.get(getResourceFilesLocation() + File.separator + filename));
+		return Files.lines(Paths.get(ResourceDirectory.get() + File.separator + filename));
 	}
 
 	/**
@@ -107,25 +105,14 @@ public abstract class FileServer
 	{
 		for (String filename : getLocalFilenames())
 		{
-			if (!(new File(getResourceFilesLocation() + File.separator + filename).exists()))
+			if (!(new File(ResourceDirectory.get() + File.separator + filename).exists()))
 				return false;
 		}
 		return true;
 	}
 
-	public String getResourceFilesLocation()
-	{
-		String userDir = System.getProperty("user.dir");
-		File dir = new File(userDir + File.separator + RESOURCE_DIR_NAME);
-		if (dir.exists() || dir.mkdirs()) return dir.getPath();
-		String userHome = System.getProperty("user.home");
-		dir = new File(userHome + File.separator + RESOURCE_DIR_NAME);
-		if (dir.exists() || dir.mkdirs()) return dir.getPath();
-		return null;
-	}
-
 	public String locateInBase(String file)
 	{
-		return getResourceFilesLocation() + File.separator + file;
+		return ResourceDirectory.get() + File.separator + file;
 	}
 }
