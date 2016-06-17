@@ -98,6 +98,25 @@ public class PCPathway extends FileServer
 		return true;
 	}
 
+	public void addCustomPathway(String id, String name, Set<String> genes, Set<String> chems)
+	{
+		if (pathway2name.containsKey(id)) throw new IllegalArgumentException("Pathway already exists. ID = " + id);
+
+		pathway2name.put(id, name);
+		pathway2gene.put(id, genes);
+		pathway2chem.put(id, chems);
+		for (String gene : genes)
+		{
+			if (!gene2pathway.containsKey(gene)) gene2pathway.put(gene, new HashSet<>());
+			gene2pathway.get(gene).add(id);
+		}
+		for (String chem : chems)
+		{
+			if (!chem2pathway.containsKey(chem)) chem2pathway.put(chem, new HashSet<>());
+			chem2pathway.get(chem).add(id);
+		}
+		pathway2resource.put(id, "Custom");
+	}
 
 	public Set<String> getPathways(String gene)
 	{
@@ -175,11 +194,32 @@ public class PCPathway extends FileServer
 		Map<String, Double> mapP = new HashMap<>();
 		Map<String, Double> mapL = new HashMap<>();
 
+		Set<ContentSet<String>> memory = new HashSet<>();
+
 		Stream.concat(selectionGeneCnt.keySet().stream(), selectionChemCnt.keySet().stream()).distinct().forEach(pathway ->
 		{
 			int pathwaySize = 0;
-			if (!genes.isEmpty()) pathwaySize += pathway2gene.get(pathway).size();
-			if (!chems.isEmpty()) pathwaySize += pathway2chem.get(pathway).size();
+			if (!genes.isEmpty())
+			{
+				pathwaySize += pathway2gene.get(pathway).size();
+				if (chems.isEmpty())
+				{
+					ContentSet<String> cs = new ContentSet<>(pathway2gene.get(pathway));
+					if (memory.contains(cs)) return;
+					else memory.add(cs);
+				}
+			}
+			if (!chems.isEmpty())
+			{
+				pathwaySize += pathway2chem.get(pathway).size();
+				if (genes.isEmpty())
+				{
+					ContentSet<String> cs = new ContentSet<>(pathway2chem.get(pathway));
+					if (memory.contains(cs)) return;
+					else memory.add(cs);
+				}
+			}
+
 			if (pathwaySize < minMemberSize || pathwaySize > maxMemberSize) return;
 
 			int size = background.size();

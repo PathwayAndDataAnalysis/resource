@@ -19,6 +19,14 @@ import java.util.*;
  */
 public class PathwayCommons extends FileServer
 {
+	private static PathwayCommons instance;
+
+	public static PathwayCommons get()
+	{
+		if (instance == null) instance = new PathwayCommons();
+		return instance;
+	}
+
 	public Graph getGraph(SIFType... types)
 	{
 		if (fileExists(types))

@@ -4,6 +4,8 @@ import org.panda.utility.statistics.Histogram;
 import org.panda.utility.statistics.Summary;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -11,111 +13,78 @@ import java.util.*;
  */
 public class MutationReader
 {
-	private Map<String, Map<String, String>> typeMap;
-	private Map<String, Map<String, String>> valueMap;
+	private Map<String, Map<String, List<MutTuple>>> mutMap;
 
 	private Set<String> sampleSet;
 
-	public static final String NO_DATA = "NO_DATA";
-
-	public MutationReader(String filename) throws FileNotFoundException
+	public MutationReader(String filename) throws IOException
 	{
 		this(filename, null);
 	}
 
-	public MutationReader(String filename, Set<String> genes) throws FileNotFoundException
+	public MutationReader(String filename, String... mutTypes) throws IOException
 	{
-		this.typeMap = new LinkedHashMap<String, Map<String, String>>();
-		this.valueMap = new LinkedHashMap<String, Map<String, String>>();
-		this.sampleSet = new HashSet<String>();
-		if (filename != null) load(filename, genes);
+		this.mutMap = new LinkedHashMap<>();
+		this.sampleSet = new HashSet<>();
+		if (filename != null) load(filename, mutTypes.length == 0 ? null : new HashSet<>(Arrays.asList(mutTypes)));
 	}
 
-	public void load(String filename, Set<String> genes) throws FileNotFoundException
+	public void load(String filename, Set<String> mutTypes) throws IOException
 	{
-		Scanner sc = new Scanner(new File(filename));
-
 		int typeInd = -1;
 		int sampleInd = -1;
 		int protChInd = -1;
 
-		Map<String, Map<String, Set<String>>> values = new HashMap<String, Map<String, Set<String>>>();
+		Optional<String> opt = Files.lines(Paths.get(filename)).filter(l -> !l.startsWith("#"))
+			.filter(l -> l.startsWith("Hugo_Symbol")).findFirst();
 
-		while (sc.hasNextLine())
+		if (opt.isPresent())
 		{
-			String line = sc.nextLine();
-			if (line.startsWith("#")) continue;
+			String[] header = opt.get().split("\t");
+			typeInd = indexOf(header, "Variant_Classification");
+			sampleInd = indexOf(header, "Tumor_Sample_Barcode");
+			protChInd = indexOf(header, "Protein_Change");
+			if (protChInd < 0) protChInd = indexOf(header, "amino_acid_change_WU");
+			if (protChInd < 0) protChInd = indexOf(header, "AAChange");
+			if (protChInd < 0) protChInd = indexOf(header, "amino_acid_change");
+			if (protChInd < 0) protChInd = indexOf(header, "HGVSp_Short");
 
-			if (line.startsWith("Hugo_Symbol"))
+			if (protChInd < 0)
 			{
-				String[] header = line.split("\t");
-				typeInd = indexOf(header, "Variant_Classification");
-				sampleInd = indexOf(header, "Tumor_Sample_Barcode");
-				protChInd = indexOf(header, "Protein_Change");
-				if (protChInd < 0) protChInd = indexOf(header, "amino_acid_change_WU");
-				if (protChInd < 0) protChInd = indexOf(header, "AAChange");
-				if (protChInd < 0) protChInd = indexOf(header, "amino_acid_change");
-
-				if (protChInd < 0)
-				{
-					System.out.println("No protein change in file " + filename);
-					return;
-				}
-				continue;
+				System.out.println("No protein change in file " + filename);
+				return;
 			}
+		}
 
-			String id = line.substring(0, line.indexOf("\t"));
+		processLines(filename, typeInd, sampleInd, protChInd, mutTypes);
+	}
 
-			if (genes != null && !genes.contains(id)) continue;
-
-			String[] token = line.split("\t");
-
+	private void processLines(String filename, int typeInd, int sampleInd, int protChInd, Set<String> mutTypes)
+		throws IOException
+	{
+		Files.lines(Paths.get(filename)).filter(l -> !l.startsWith("#")).filter(l -> !l.startsWith("Hugo_Symbol"))
+			.map(l -> l.split("\t"))
+			.filter(t -> !t[0].isEmpty() && !t[0].equals("."))
+			.filter(t -> mutTypes == null || mutTypes.contains(t[typeInd]))
+			.forEach(token ->
+		{
+			String id = token[0];
 			String sample = token[sampleInd];
 			sample = sample.substring(0, 15);
-
 			sampleSet.add(sample);
 
 			String type = token[typeInd];
 
-			if (type.equals("Silent")) continue;
-
 			String protCh = token.length <= protChInd ? "" : token[protChInd];
-			if (!protCh.isEmpty() && protCh.startsWith("p.")) protCh = protCh.substring(2);
-			else if (protCh.equals(".")) protCh = "";
-			else if (!protCh.equals("NULL") && !protCh.isEmpty())
-			{
-//				System.out.println("protCh = " + protCh + " file=" + filename);
-				continue;
-			}
+			if (protCh.startsWith("p.")) protCh = protCh.substring(2);
+			else if (protCh.equals(".") || protCh.equals("NULL")) protCh = "";
 
-			if (!typeMap.containsKey(id)) typeMap.put(id, new HashMap<String, String>());
-			typeMap.get(id).put(sample, type);
+			MutTuple mut = new MutTuple(type, protCh);
 
-			if (!protCh.equals("NULL") && !protCh.isEmpty())
-			{
-				if (!values.containsKey(id)) values.put(id, new HashMap<String, Set<String>>());
-				if (!values.get(id).containsKey(sample)) values.get(id).put(sample, new HashSet<String>());
-				values.get(id).get(sample).add(protCh);
-			}
-
-			if (genes != null && genes.size() == typeMap.size()) break;
-		}
-
-		for (String gene : values.keySet())
-		{
-			if (!valueMap.containsKey(gene)) valueMap.put(gene, new HashMap<String, String>());
-			for (String sample : values.get(gene).keySet())
-			{
-				if (valueMap.get(gene).containsKey(sample)) continue;
-
-				StringBuilder s = new StringBuilder();
-				for (String mut : values.get(gene).get(sample))
-				{
-					s.append(mut).append(" ");
-				}
-				valueMap.get(gene).put(sample, s.toString().trim());
-			}
-		}
+			if (!mutMap.containsKey(id)) mutMap.put(id, new HashMap<>());
+			if (!mutMap.get(id).containsKey(sample)) mutMap.get(id).put(sample, new ArrayList<>());
+			mutMap.get(id).get(sample).add(mut);
+		});
 	}
 
 	public Set<String> getSamples()
@@ -125,7 +94,7 @@ public class MutationReader
 
 	public Set<String> getGenes()
 	{
-		return typeMap.keySet();
+		return mutMap.keySet();
 	}
 
 	private int indexOf(String[] array, String val)
@@ -138,47 +107,51 @@ public class MutationReader
 	}
 
 	/**
-	 * All samples have to be in this dataset. This method does not support NO_DATA conditions.
+	 * All samples have to be in this dataset. This method does not support "no data" conditions.
 	 */
 	public boolean[] getGeneAlterationArray(String id, String[] samples)
 	{
-		if (typeMap.containsKey(id))
+		if (mutMap.containsKey(id))
 		{
 			boolean[] b = new boolean[samples.length];
 			Arrays.fill(b, false);
 			for (int i = 0; i < samples.length; i++)
 			{
-				if (typeMap.get(id).containsKey(samples[i])) b[i] = true;
-				else throw new IllegalArgumentException("Sample " + samples[i] + " does not have mutation data.");
+				if (!sampleSet.contains(samples[i]))
+					throw new IllegalArgumentException("Sample " + samples[i] + " does not have mutation data.");
+
+				if (mutMap.get(id).containsKey(samples[i])) b[i] = true;
 			}
 			return b;
 		}
 		return null;
 	}
 
-	public String[] getMutationValues(String id, String[] samples)
+	/**
+	 * @return Array of mutation tuples list. Returns null if id is not recognized. If a sample is not recognized, the
+	 * array contains null. An empty list as array element means no mutations in that sample. Do not modify the returned
+	 * lists. They are original.
+	 */
+	public List<MutTuple>[] getMutations(String id, String[] samples)
 	{
-		if (valueMap.containsKey(id))
+		if (!mutMap.containsKey(id)) return null;
+
+		List<MutTuple>[] list = new List[samples.length];
+
+		Map<String, List<MutTuple>> stm = mutMap.get(id);
+
+		for (int i = 0; i < samples.length; i++)
 		{
-			String[] vals = new String[samples.length];
-			for (int i = 0; i < samples.length; i++)
-			{
-				if (valueMap.get(id).containsKey(samples[i]))
-				{
-					vals[i] = valueMap.get(id).get(samples[i]);
-				} else if (!sampleSet.contains(samples[i]))
-				{
-					vals[i] = NO_DATA;
-				}
-			}
-			return vals;
+			list[i] = stm.get(samples[i]);
 		}
-		return null;
+
+		return list;
 	}
+
 
 	public void writeAsAlterationMatrix(String outFile) throws IOException
 	{
-		List<String> samples = new ArrayList<String>(getSamples());
+		List<String> samples = new ArrayList<>(getSamples());
 		Collections.sort(samples);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
 
@@ -187,10 +160,10 @@ public class MutationReader
 			writer.write("\t" + sample);
 		}
 
-		for (String gene : typeMap.keySet())
+		for (String gene : mutMap.keySet())
 		{
 			writer.write("\n" + gene);
-			Map<String, String> map = typeMap.get(gene);
+			Map<String, List<MutTuple>> map = mutMap.get(gene);
 
 			for (String sample : samples)
 			{
@@ -205,39 +178,33 @@ public class MutationReader
 	{
 		int totalMut = 0;
 		int delMut = 0;
-		Map<String, Map<String, Integer>> cnt = new HashMap<String, Map<String, Integer>>();
-		for (String gene : valueMap.keySet())
+		Map<String, Map<String, Integer>> cnt = new HashMap<>();
+		for (String gene : mutMap.keySet())
 		{
-			for (String sample : valueMap.get(gene).keySet())
+			for (String sample : mutMap.get(gene).keySet())
 			{
-				for (String mut : valueMap.get(gene).get(sample).split(" "))
+				List<MutTuple> list = mutMap.get(gene).get(sample);
+				for (MutTuple mut : list)
 				{
 					totalMut++;
-					if (mut.contains("*") || mut.contains("fs")) delMut++;
-					if (!cnt.containsKey(gene)) cnt.put(gene, new HashMap<String, Integer>());
-					if (cnt.get(gene).containsKey(mut)) cnt.get(gene).put(mut, cnt.get(gene).get(mut) + 1);
-					else cnt.get(gene).put(mut, 1);
+					if (mut.value.contains("*") || mut.value.contains("fs")) delMut++;
+					if (!cnt.containsKey(gene)) cnt.put(gene, new HashMap<>());
+					if (cnt.get(gene).containsKey(mut.value)) cnt.get(gene).put(mut.value, cnt.get(gene).get(mut.value) + 1);
+					else cnt.get(gene).put(mut.value, 1);
 				}
 			}
 		}
 
 		System.out.println("Global ratio of deleterious mutations = " + (delMut / (double) totalMut));
 
-		final Map<String, Integer> best = new HashMap<String, Integer>();
+		final Map<String, Integer> best = new HashMap<>();
 		for (String gene : cnt.keySet())
 		{
 			best.put(gene, Summary.max(cnt.get(gene).values()));
 		}
 
-		List<String> genes = new ArrayList<String>(cnt.keySet());
-		Collections.sort(genes, new Comparator<String>()
-		{
-			@Override
-			public int compare(String o1, String o2)
-			{
-				return best.get(o2).compareTo(best.get(o1));
-			}
-		});
+		List<String> genes = new ArrayList<>(cnt.keySet());
+		Collections.sort(genes, (o1, o2) -> best.get(o2).compareTo(best.get(o1)));
 
 		Map<String, Double> dRat = getRatiosOfDeleteriousMutations();
 
@@ -256,21 +223,22 @@ public class MutationReader
 
 	public Map<String, Integer> getHighestRecurrenceCounts()
 	{
-		Map<String, Map<String, Integer>> cnt = new HashMap<String, Map<String, Integer>>();
-		for (String gene : valueMap.keySet())
+		Map<String, Map<String, Integer>> cnt = new HashMap<>();
+		for (String gene : mutMap.keySet())
 		{
-			for (String sample : valueMap.get(gene).keySet())
+			for (String sample : mutMap.get(gene).keySet())
 			{
-				for (String mut : valueMap.get(gene).get(sample).split(" "))
+				List<MutTuple> mutTuples = mutMap.get(gene).get(sample);
+				for (MutTuple mut : mutTuples)
 				{
-					if (!cnt.containsKey(gene)) cnt.put(gene, new HashMap<String, Integer>());
-					if (cnt.get(gene).containsKey(mut)) cnt.get(gene).put(mut, cnt.get(gene).get(mut) + 1);
-					else cnt.get(gene).put(mut, 1);
+					if (!cnt.containsKey(gene)) cnt.put(gene, new HashMap<>());
+					if (cnt.get(gene).containsKey(mut.value)) cnt.get(gene).put(mut.value, cnt.get(gene).get(mut.value) + 1);
+					else cnt.get(gene).put(mut.value, 1);
 				}
 			}
 		}
 
-		Map<String, Integer> highest = new HashMap<String, Integer>();
+		Map<String, Integer> highest = new HashMap<>();
 		for (String gene : cnt.keySet())
 		{
 			highest.put(gene, Summary.max(cnt.get(gene).values()));
@@ -280,16 +248,19 @@ public class MutationReader
 
 	public Map<String, Double> getRatiosOfDeleteriousMutations()
 	{
-		Map<String, Double> rat = new HashMap<String, Double>();
-		for (String gene : valueMap.keySet())
+		Map<String, Double> rat = new HashMap<>();
+		for (String gene : mutMap.keySet())
 		{
 			int total = 0;
 			int del = 0;
-			for (String sample : valueMap.get(gene).keySet())
+			for (String sample : mutMap.get(gene).keySet())
 			{
-				String s = valueMap.get(gene).get(sample);
-				total++;
-				if (s.contains("*") || s.contains("fs")) del++;
+				List<MutTuple> list = mutMap.get(gene).get(sample);
+				for (MutTuple mut : list)
+				{
+					total++;
+					if (mut.isDeleterious()) del++;
+				}
 			}
 			double r = del / (double) total;
 			rat.put(gene, r);
@@ -302,27 +273,28 @@ public class MutationReader
 		int total = 0;
 		int del = 0;
 
-		for (String gene : valueMap.keySet())
+		for (String gene : mutMap.keySet())
 		{
-			for (String sample : valueMap.get(gene).keySet())
+			for (String sample : mutMap.get(gene).keySet())
 			{
-				String s = valueMap.get(gene).get(sample);
-				total++;
-				if (s.contains("*") || s.contains("fs")) del++;
+				List<MutTuple> list = mutMap.get(gene).get(sample);
+				for (MutTuple mut : list)
+				{
+					total++;
+					if (mut.isDeleterious()) del++;
+				}
 			}
 		}
 		double r = del / (double) total;
 		return r;
 	}
 
-
-
 	public Map<String, Integer> getMutatedSampleCounts()
 	{
-		Map<String, Integer> cnt = new HashMap<String, Integer>();
-		for (String gene : valueMap.keySet())
+		Map<String, Integer> cnt = new HashMap<>();
+		for (String gene : mutMap.keySet())
 		{
-			cnt.put(gene, valueMap.get(gene).keySet().size());
+			cnt.put(gene, mutMap.get(gene).keySet().size());
 		}
 		return cnt;
 	}

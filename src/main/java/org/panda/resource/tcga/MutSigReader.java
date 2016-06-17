@@ -2,6 +2,7 @@ package org.panda.resource.tcga;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -11,7 +12,7 @@ import java.util.Scanner;
  */
 public class MutSigReader
 {
-	public static Map<String, Double> readPValues(String dir) throws FileNotFoundException
+	public static Map<String, Double> readPValues(String dir) { try
 	{
 		Map<String, Double> map = new HashMap<>();
 		Scanner sc = new Scanner(new File(dir + File.separator + "scores-mutsig.txt"));
@@ -25,4 +26,5 @@ public class MutSigReader
 		}
 		return map;
 	}
+	catch (IOException e) {throw new RuntimeException(e);}}
 }
