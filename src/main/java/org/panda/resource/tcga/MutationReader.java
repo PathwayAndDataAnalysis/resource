@@ -26,7 +26,7 @@ public class MutationReader
 	{
 		this.mutMap = new LinkedHashMap<>();
 		this.sampleSet = new HashSet<>();
-		if (filename != null) load(filename, mutTypes.length == 0 ? null : new HashSet<>(Arrays.asList(mutTypes)));
+		if (filename != null) load(filename, mutTypes == null || mutTypes.length == 0 ? null : new HashSet<>(Arrays.asList(mutTypes)));
 	}
 
 	public void load(String filename, Set<String> mutTypes) throws IOException
@@ -54,13 +54,14 @@ public class MutationReader
 				System.out.println("No protein change in file " + filename);
 				return;
 			}
+
 		}
 
 		processLines(filename, typeInd, sampleInd, protChInd, mutTypes);
 	}
 
-	private void processLines(String filename, int typeInd, int sampleInd, int protChInd, Set<String> mutTypes)
-		throws IOException
+	private void processLines(String filename, int typeInd, int sampleInd, int protChInd,
+		Set<String> mutTypes) throws IOException
 	{
 		Files.lines(Paths.get(filename)).filter(l -> !l.startsWith("#")).filter(l -> !l.startsWith("Hugo_Symbol"))
 			.map(l -> l.split("\t"))
@@ -85,6 +86,11 @@ public class MutationReader
 			if (!mutMap.get(id).containsKey(sample)) mutMap.get(id).put(sample, new ArrayList<>());
 			mutMap.get(id).get(sample).add(mut);
 		});
+	}
+
+	private boolean multiCenter (String val)
+	{
+		return Arrays.stream(val.split("\\|")).distinct().count() > 1;
 	}
 
 	public Set<String> getSamples()
@@ -143,6 +149,7 @@ public class MutationReader
 		for (int i = 0; i < samples.length; i++)
 		{
 			list[i] = stm.get(samples[i]);
+			if (list[i] == null && sampleSet.contains(samples[i])) list[i] = Collections.emptyList();
 		}
 
 		return list;
