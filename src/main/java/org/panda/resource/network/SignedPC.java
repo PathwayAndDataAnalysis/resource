@@ -10,10 +10,7 @@ import org.panda.utility.graph.PhosphoGraph;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +18,14 @@ import java.util.stream.Collectors;
  */
 public class SignedPC extends PathwayCommons
 {
+	private static SignedPC instance;
+
+	public static SignedPC get()
+	{
+		if (instance == null) instance = new SignedPC();
+		return instance;
+	}
+
 	public Map<SignedType, Graph> getAllGraphs()
 	{
 		Map<SignedType, Graph> map = new HashMap<>();
@@ -136,6 +141,8 @@ public class SignedPC extends PathwayCommons
 	public static void main(String[] args)
 	{
 		printNetworkSizes();
+		Graph graph = SignedPC.get().getGraph(SignedType.PHOSPHORYLATES);
+		Set<String> set = graph.getDownstream("TP53");
 	}
 
 	private static void printNetworkSizes()
