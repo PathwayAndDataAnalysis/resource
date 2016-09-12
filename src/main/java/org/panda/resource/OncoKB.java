@@ -36,6 +36,11 @@ public class OncoKB extends FileServer
 		return sym2level.containsKey(sym);
 	}
 
+	public String getLevel(String gene)
+	{
+		return sym2level.get(gene);
+	}
+
 	@Override
 	public String[] getLocalFilenames()
 	{

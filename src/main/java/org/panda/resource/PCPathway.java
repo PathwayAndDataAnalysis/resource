@@ -182,6 +182,8 @@ public class PCPathway extends FileServer
 			excess.removeAll(background);
 
 			mols.removeAll(excess);
+			genes.removeAll(excess);
+			chems.removeAll(excess);
 			System.out.println("Removed " + excess.size() + " unknown genes: " + excess);
 			System.out.println("Using " + mols.size() + ": " + mols);
 		}

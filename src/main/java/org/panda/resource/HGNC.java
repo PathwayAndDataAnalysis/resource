@@ -82,6 +82,30 @@ public class HGNC extends FileServer
 		return sym2chr.get(symbol);
 	}
 
+	/**
+	 * If the given collection
+	 */
+	public void replaceRecognizedOlds(Collection<String> col, boolean removeUnrecognized)
+	{
+		Set<String> news = new HashSet<>();
+		Set<String> discard = new HashSet<>();
+		for (String s : col)
+		{
+			String n = getSymbol(s);
+			if (n == null)
+			{
+				if (removeUnrecognized) discard.add(s);
+			}
+			else if (!n.equals(s))
+			{
+				news.add(n);
+				discard.add(s);
+			}
+		}
+		col.removeAll(discard);
+		col.addAll(news);
+	}
+
 	@Override
 	public String[] getLocalFilenames()
 	{

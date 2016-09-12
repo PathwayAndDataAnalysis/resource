@@ -12,7 +12,22 @@ import java.util.Scanner;
  */
 public class MutSigReader
 {
-	public static Map<String, Double> readPValues(String dir) { try
+	public static Map<String, Double> readPValues(String dir)
+	{
+		return readValues(dir, true);
+	}
+
+	public static Map<String, Double> readQValues(String dir)
+	{
+		return readValues(dir, false);
+	}
+
+	public static boolean hasMutsig(String dir)
+	{
+		return new File(dir + File.separator + "scores-mutsig.txt").exists();
+	}
+
+	public static Map<String, Double> readValues(String dir, boolean p) { try
 	{
 		Map<String, Double> map = new HashMap<>();
 		Scanner sc = new Scanner(new File(dir + File.separator + "scores-mutsig.txt"));
@@ -21,7 +36,7 @@ public class MutSigReader
 		{
 			String[] token = sc.nextLine().split("\t");
 			String gene = token[1];
-			double pval = Double.parseDouble(token[token.length-2]);
+			double pval = Double.parseDouble(token[token.length - (p ? 2 : 1)]);
 			map.put(gene, pval);
 		}
 		return map;
