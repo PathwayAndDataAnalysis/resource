@@ -2,7 +2,6 @@ package org.panda.resource;
 
 import org.biopax.paxtools.controller.Cloner;
 import org.biopax.paxtools.controller.Completer;
-import org.biopax.paxtools.controller.PathAccessor;
 import org.biopax.paxtools.controller.SimpleEditorMap;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.BioPAXElement;
@@ -10,7 +9,6 @@ import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
 import org.biopax.paxtools.pattern.util.Blacklist;
-import org.panda.utility.ContentSet;
 import org.panda.utility.Kronometre;
 import org.panda.utility.statistics.FDR;
 import org.panda.utility.statistics.FishersExactTest;
@@ -72,7 +70,7 @@ public class PCPathway extends FileServer
 
 			if (token.length > 3)
 			{
-				Set<String> group = new ContentSet<>(Arrays.asList(token).subList(3, token.length));
+				Set<String> group = new HashSet<>(Arrays.asList(token).subList(3, token.length));
 				if (groups.contains(group)) return;
 				groups.add(group);
 
@@ -196,7 +194,7 @@ public class PCPathway extends FileServer
 		Map<String, Double> mapP = new HashMap<>();
 		Map<String, Double> mapL = new HashMap<>();
 
-		Set<ContentSet<String>> memory = new HashSet<>();
+		Set<Set<String>> memory = new HashSet<>();
 
 		Stream.concat(selectionGeneCnt.keySet().stream(), selectionChemCnt.keySet().stream()).distinct().forEach(pathway ->
 		{
@@ -206,7 +204,7 @@ public class PCPathway extends FileServer
 				pathwaySize += pathway2gene.get(pathway).size();
 				if (chems.isEmpty())
 				{
-					ContentSet<String> cs = new ContentSet<>(pathway2gene.get(pathway));
+					Set<String> cs = new HashSet<>(pathway2gene.get(pathway));
 					if (memory.contains(cs)) return;
 					else memory.add(cs);
 				}
@@ -216,7 +214,7 @@ public class PCPathway extends FileServer
 				pathwaySize += pathway2chem.get(pathway).size();
 				if (genes.isEmpty())
 				{
-					ContentSet<String> cs = new ContentSet<>(pathway2chem.get(pathway));
+					Set<String> cs = new HashSet<>(pathway2chem.get(pathway));
 					if (memory.contains(cs)) return;
 					else memory.add(cs);
 				}
