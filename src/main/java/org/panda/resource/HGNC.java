@@ -193,15 +193,130 @@ public class HGNC extends FileServer
 
 	public static void main(String[] args)
 	{
-		HGNC hgnc = new HGNC();
-		System.out.println(hgnc.getSymbol("CDC42"));
-		System.out.println(hgnc.getChromosomeLoc("ATAD2"));
-		Set<String> set = hgnc.getSymbolsOfChromosome("8q24");
-		for (String sym : set)
-		{
-			System.out.println(sym + "\t" + hgnc.getChromosomeLoc(sym));
-		}
+//		HGNC hgnc = new HGNC();
+//		System.out.println(hgnc.getSymbol("CDC42"));
+//		System.out.println(hgnc.getChromosomeLoc("ATAD2"));
+//		Set<String> set = hgnc.getSymbolsOfChromosome("8q24");
+//		for (String sym : set)
+//		{
+//			System.out.println(sym + "\t" + hgnc.getChromosomeLoc(sym));
+//		}
+//
+//		System.out.println(hgnc.getChromosomeLoc("MYC"));
 
-		System.out.println(hgnc.getChromosomeLoc("MYC"));
+		convertSymbols();
+	}
+
+	private static void convertSymbols()
+	{
+		List<String> list = Arrays.asList(("TAL1\n" +
+			"AGBL4\n" +
+			"ELAVL4\n" +
+			"NEGR1\n" +
+			"FPGT-TNNI3K\n" +
+			"FUBP1\n" +
+			"PTBP2\n" +
+			"GNAT2\n" +
+			"SEC16B\n" +
+			"NAV1\n" +
+			"TMEM18\n" +
+			"ADCY3\n" +
+			"KCNK3\n" +
+			"LINC01122\n" +
+			"EHBP1\n" +
+			"LRP1B\n" +
+			"FIGN\n" +
+			"COBLL1-GRB14\n" +
+			"UBE2E3\n" +
+			"CREB1\n" +
+			"ERBB4\n" +
+			"USP37\n" +
+			"LOC646736\n" +
+			"IRS1a\n" +
+			"RARB\n" +
+			"FHIT\n" +
+			"GBE1\n" +
+			"CADM2\n" +
+			"RASA2\n" +
+			"ETV5\n" +
+			"GNPDA2\n" +
+			"SCARB2\n" +
+			"SLC39A8\n" +
+			"HHIP\n" +
+			"POC5\n" +
+			"GALNT10\n" +
+			"C6orf106\n" +
+			"TDRG1\n" +
+			"TFAP2B\n" +
+			"FOXO3\n" +
+			"LOC285762\n" +
+			"IFNGR1\n" +
+			"PARK2\n" +
+			"HIP1\n" +
+			"PMS2L11\n" +
+			"CALCR\n" +
+			"ASB4\n" +
+			"HNF4G\n" +
+			"ZBTB10\n" +
+			"RALYL\n" +
+			"C9orf93\n" +
+			"LINGO2\n" +
+			"EPB41L4B\n" +
+			"TLR4\n" +
+			"LMX1B\n" +
+			"GRID1\n" +
+			"HIF1AN\n" +
+			"NT5C2\n" +
+			"TCF7L2\n" +
+			"TRIM66\n" +
+			"BDNF\n" +
+			"HSD17B12\n" +
+			"MTCH2\n" +
+			"CADM1\n" +
+			"BCDIN3D\n" +
+			"CLIP1\n" +
+			"MTIF3\n" +
+			"OLFM4\n" +
+			"MIR548X2\n" +
+			"MIR548A2\n" +
+			"SPRY2a\n" +
+			"STXBP6\n" +
+			"PRKD1\n" +
+			"PRKD1\n" +
+			"NRXN3\n" +
+			"DMXL2\n" +
+			"MAP2K5\n" +
+			"LOC100287559\n" +
+			"NLRC3\n" +
+			"GPRC5B\n" +
+			"SBK1\n" +
+			"ATP2A1\n" +
+			"INO80E\n" +
+			"KAT8\n" +
+			"CBLN1\n" +
+			"FTO\n" +
+			"SMG6\n" +
+			"RABEP1\n" +
+			"IGF2BP1\n" +
+			"RPTOR\n" +
+			"C18orf8\n" +
+			"LOC284260\n" +
+			"GRP\n" +
+			"MC4R\n" +
+			"PGPEP1\n" +
+			"CRTC1\n" +
+			"KCTD15\n" +
+			"TOMM40\n" +
+			"QPCTL\n" +
+			"ZC3H4\n" +
+			"ZFP64\n" +
+			"ETS2\n" +
+			"PICK1-PLA2G6\n").split("\n"));
+
+		for (String text : list)
+		{
+			String sym = get().getSymbol(text);
+			System.out.println(text + "\t" + sym);
+		}
 	}
 }

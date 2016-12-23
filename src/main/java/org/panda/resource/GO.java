@@ -238,7 +238,7 @@ public class GO extends FileServer
 
 //		checkInterestTermAssociationRate();
 
-		get().printAssociatedTerms("TTN", null);
+		get().printAssociatedTerms("MPHOSPH10", null);
 	}
 
 	private static List<String> readPanCanGenes() throws IOException

@@ -287,8 +287,14 @@ public class PCPathway extends FileServer
 	public void writeEnrichmentResults(Set<String> molecules, int minMemberSize, int maxMemberSize, String filename)
 		throws IOException
 	{
-		final Map<String, Double>[] pvals = getEnrichmentPvals(molecules, null, minMemberSize, maxMemberSize);
-		Map<String, Double> qvals = getEnrichmentQvals(molecules, null, minMemberSize, maxMemberSize);
+		writeEnrichmentResults(molecules, null, minMemberSize, maxMemberSize,filename);
+	}
+
+	public void writeEnrichmentResults(Set<String> molecules, Set<String> background, int minMemberSize, int maxMemberSize, String filename)
+		throws IOException
+	{
+		final Map<String, Double>[] pvals = getEnrichmentPvals(molecules, background, minMemberSize, maxMemberSize);
+		Map<String, Double> qvals = getEnrichmentQvals(molecules, background, minMemberSize, maxMemberSize);
 
 		boolean hasGene = molecules.stream().anyMatch(s -> !s.startsWith("CHEBI:"));
 		boolean hasChem = molecules.stream().anyMatch(s -> s.startsWith("CHEBI:"));
@@ -304,21 +310,30 @@ public class PCPathway extends FileServer
 		writer.write("# P-value: Enrichment p-value of the pathway calculated by Fisher's exact test.\n");
 		writer.write("# Q-value: Estimated FDR (false discovery rate) if this p-value is used as cutoff threshold.\n");
 		writer.write("# Hit size: Number of query genes that overlaps with this pathway.\n");
+		if (background != null)
+			writer.write("# Pathway size in background: Intersection of genes in this pathway and the given background.\n");
 		writer.write("# Pathway size: Number of genes in this pathway.\n");
 		writer.write("# Molecules contributed enrichment: Names of query genes that overlaps with this pathway.\n");
-		writer.write("Pathway name\tResource\tPathway Commons ID\tP-value\tQ-value\tHit size\tPathway size\tMolecules contributed enrichment");
+		writer.write("Pathway name\tResource\tPathway Commons ID\tP-value\tQ-value\tHit size\t" + (background == null ? "" : "Pathway size in background\t") + "Pathway size\tMolecules contributed enrichment");
 		for (String id : ids)
 		{
 			if (pvals[0].get(id) > 0.05) break;
 
-			Set<String> g = new HashSet<>();
-			if (hasGene) g.addAll(getGenes(id));
-			if (hasChem) g.addAll(getChems(id));
-			int allSize = g.size();
+			Set<String> all = new HashSet<>();
+			if (hasGene) all.addAll(getGenes(id));
+			if (hasChem) all.addAll(getChems(id));
+			int allSize = all.size();
+			Set<String> g = new HashSet<>(all);
 			g.retainAll(molecules);
 			int hitSize = g.size();
+			int inBg = 0;
+			if (background != null)
+			{
+				all.retainAll(background);
+				inBg = all.size();
+			}
 			writer.write("\n" + getName(id) + "\t" + getResource(id) + "\t" + id + "\t" + pvals[0].get(id) + "\t" +
-				qvals.get(id) + "\t" + hitSize + "\t" + allSize + "\t" + getMolsInString(g));
+			qvals.get(id) + "\t" + hitSize + "\t" + (background == null ? "" : inBg + "\t") + allSize + "\t" + getMolsInString(g));
 		}
 		writer.close();
 	}

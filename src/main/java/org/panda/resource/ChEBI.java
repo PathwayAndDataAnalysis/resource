@@ -1,7 +1,14 @@
 package org.panda.resource;
 
+import org.panda.utility.FileUtil;
+
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,11 +79,36 @@ public class ChEBI extends FileServer
 		return idToName;
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
-		for (String s : "CHEBI:17295, CHEBI:16977, CHEBI:17196, CHEBI:17191, CHEBI:16414, CHEBI:17203, CHEBI:16828, CHEBI:15603, CHEBI:16015".split(", "))
+//		for (String s : "CHEBI:17295, CHEBI:16977, CHEBI:17196, CHEBI:17191, CHEBI:16414, CHEBI:17203, CHEBI:16828, CHEBI:15603, CHEBI:16015".split(", "))
+//		{
+//			System.out.println(s + "\t" + get().getName(s));
+//		}
+
+		replaceIDsWithNameInSIF("/home/babur/Documents/Analyses/MrOS/links-between-metabolites-and-proteins.sif");
+	}
+
+	private static void replaceIDsWithNameInSIF(String filename) throws IOException
+	{
+		List<String> lines = new ArrayList<>();
+		Files.lines(Paths.get(filename)).map(l -> l.split("\t")).forEach(t ->
 		{
-			System.out.println(s + "\t" + get().getName(s));
+			if (t[0].startsWith("CHEBI:")) t[0] = get().getName(t[0]) != null ? get().getName(t[0]) : t[0];
+			if (t[2].startsWith("CHEBI:")) t[2] = get().getName(t[2]) != null ? get().getName(t[2]) : t[2];
+			String s = t[0];
+			for (int i = 1; i < t.length; i++)
+			{
+				s += "\t" + t[i];
+			}
+			lines.add(s);
+		});
+
+		BufferedWriter writer = Files.newBufferedWriter(Paths.get(filename));
+		for (String line : lines)
+		{
+			writer.write(line + "\n");
 		}
+		writer.close();
 	}
 }

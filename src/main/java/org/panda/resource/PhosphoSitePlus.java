@@ -114,6 +114,20 @@ public class PhosphoSitePlus extends FileServer
 		typeMap = new HashMap<>();
 		actualMap = new HashMap<>();
 
+		Files.lines(Paths.get(locateInBase(getLocalFilenames()[1]))).map(line -> line.split("\\s+"))
+			.filter(token -> token.length > 2).forEach(token -> {
+			String gene = token[0];
+
+			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
+			if (!actualMap.containsKey(gene)) actualMap.put(gene, new HashMap<>());
+
+			String site = token[1];
+			int sign = Integer.parseInt(token[2]);
+
+			typeMap.get(gene).put(site, sign);
+			actualMap.get(gene).put(site, "manual curation");
+		});
+
 		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0])), Charset.forName("windows-31j")).skip(4)
 			.map(line -> line.split("\t"))
 			.filter(token -> token.length >= 13 && token[6].equals("human") &&
@@ -124,6 +138,9 @@ public class PhosphoSitePlus extends FileServer
 				if (!actualMap.containsKey(gene)) actualMap.put(gene, new HashMap<>());
 
 				String site = token[7];
+
+				if (typeMap.get(gene).containsKey(site)) return;
+
 				actualMap.get(gene).put(site, token[12]);
 
 				boolean actWord = false;
@@ -159,20 +176,6 @@ public class PhosphoSitePlus extends FileServer
 				{
 					typeMap.get(gene).put(site, actWord ? 1 : -1);
 				}
-		});
-
-		Files.lines(Paths.get(locateInBase(getLocalFilenames()[1]))).map(line -> line.split("\\s+"))
-			.filter(token -> token.length < 3).forEach(token -> {
-			String gene = token[0];
-
-			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
-			if (!actualMap.containsKey(gene)) actualMap.put(gene, new HashMap<>());
-
-			String site = token[1];
-			int sign = Integer.parseInt(token[2]);
-
-			typeMap.get(gene).put(site, sign);
-			actualMap.get(gene).put(site, "manual curation");
 		});
 
 		return true;
@@ -256,7 +259,7 @@ public class PhosphoSitePlus extends FileServer
 //		{
 //			printSites(list.get(i));
 //		}
-		psp.printSites("GSK3A");
+		psp.printSites("PRKCA");
 //		printUniqueAA();
 
 //		List<Integer> dists = new ArrayList<>();

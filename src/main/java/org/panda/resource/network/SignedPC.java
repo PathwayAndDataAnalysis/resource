@@ -87,34 +87,43 @@ public class SignedPC extends PathwayCommons
 	@Override
 	public boolean processTheDownloadedFiles()
 	{try{
-		Scanner sc = new Scanner(new File(locateInBase(getLocalFilenames()[0])));
-
-		Map<String, Writer> writers = new HashMap<String, Writer>();
-
+		Map<String, Writer> writers = new HashMap<>();
 		Files.createDirectories(Paths.get(getPrivateDirectory()));
 
-		while (sc.hasNextLine())
+		for (String localFilename : getLocalFilenames())
 		{
-			String line = sc.nextLine();
-			String[] token = line.split("\t");
+			Scanner sc = new Scanner(new File(locateInBase(localFilename)));
 
-			if (token.length > 2)
+			if (localFilename.contains("false"))
 			{
-				if (!writers.containsKey(token[1])) writers.put(token[1],
-					new BufferedWriter(new FileWriter(getPrivateDirectory() + token[1] + ".txt")));
 
-				writers.get(token[1]).write(token[0] + "\t" + token[2]);
-
-				if (token.length > 3)
+			}
+			else
+			{
+				while (sc.hasNextLine())
 				{
-					writers.get(token[1]).write("\t" + token[3]);
-				}
-				if (token.length > 4)
-				{
-					writers.get(token[1]).write("\t" + token[4]);
-				}
+					String line = sc.nextLine();
+					String[] token = line.split("\t");
 
-				writers.get(token[1]).write("\n");
+					if (token.length > 2)
+					{
+						if (!writers.containsKey(token[1])) writers.put(token[1],
+							new BufferedWriter(new FileWriter(getPrivateDirectory() + token[1] + ".txt")));
+
+						writers.get(token[1]).write(token[0] + "\t" + token[2]);
+
+						if (token.length > 3)
+						{
+							writers.get(token[1]).write("\t" + token[3]);
+						}
+						if (token.length > 4)
+						{
+							writers.get(token[1]).write("\t" + token[4]);
+						}
+
+						writers.get(token[1]).write("\n");
+					}
+				}
 			}
 		}
 
@@ -129,13 +138,13 @@ public class SignedPC extends PathwayCommons
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{"SignedPC.sif"};
+		return new String[]{"SignedPC.sif", "curated-signed.sif"};
 	}
 
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{GITHUB_REPO_BASE + "SignedPC.sif.gz"};
+		return new String[]{GITHUB_REPO_BASE + "SignedPC.sif.gz", GITHUB_REPO_BASE + "curated-signed.sif"};
 	}
 
 	public static void main(String[] args)
