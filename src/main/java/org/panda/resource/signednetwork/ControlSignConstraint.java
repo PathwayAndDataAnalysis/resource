@@ -5,6 +5,8 @@ import org.biopax.paxtools.pattern.Match;
 import org.biopax.paxtools.pattern.constraint.ConstraintAdapter;
 
 /**
+ * Checks if a Control has the desired sign.
+ *
  * @author Ozgun Babur
  */
 public class ControlSignConstraint extends ConstraintAdapter

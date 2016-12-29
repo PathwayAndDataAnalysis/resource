@@ -3,6 +3,8 @@ package org.panda.resource.signednetwork;
 import org.biopax.paxtools.pattern.Pattern;
 
 /**
+ * Negative expression pattern 1.
+ *
  * @author Ozgun Babur
  */
 public class EN1 extends EP1

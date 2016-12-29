@@ -7,6 +7,8 @@ import org.biopax.paxtools.pattern.constraint.Type;
 import org.biopax.paxtools.pattern.miner.ControlsExpressionMiner;
 
 /**
+ * Negative expression pattern 1 with a complex.
+ *
  * @author Ozgun Babur
  */
 public class EN1C extends EN1

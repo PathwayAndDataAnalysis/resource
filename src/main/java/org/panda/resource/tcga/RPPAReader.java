@@ -19,7 +19,7 @@ public class RPPAReader
 
 	private Map<String, Map<String, Set<String>>> symbolToIDs;
 
-	private Map<String, RPPAData> idToData;
+	private Map<String, ProteomicsFileRow> idToData;
 
 	public RPPAReader(String filename) throws FileNotFoundException
 	{
@@ -82,7 +82,7 @@ public class RPPAReader
 				sitesMap.put(g, sites);
 			}
 
-			RPPAData d = new RPPAData(id, null, geneList, sitesMap);
+			ProteomicsFileRow d = new ProteomicsFileRow(id, null, geneList, sitesMap);
 
 			idToData.put(id, d);
 
@@ -194,12 +194,12 @@ public class RPPAReader
 		return pGenes;
 	}
 
-	public Set<RPPAData> getAssociatedData(String symbol, String[] samples)
+	public Set<ProteomicsFileRow> getAssociatedData(String symbol, String[] samples)
 	{
 		Map<String, Set<String>> map = symbolToIDs.get(symbol);
 		if (map == null) return Collections.emptySet();
 
-		Set<RPPAData> stubs = new HashSet<RPPAData>();
+		Set<ProteomicsFileRow> stubs = new HashSet<ProteomicsFileRow>();
 
 		for (String pGene : map.keySet())
 		{
@@ -209,11 +209,11 @@ public class RPPAReader
 			}
 		}
 
-		Set<RPPAData> set = new HashSet<RPPAData>();
+		Set<ProteomicsFileRow> set = new HashSet<ProteomicsFileRow>();
 
-		for (RPPAData stub : stubs)
+		for (ProteomicsFileRow stub : stubs)
 		{
-			RPPAData d = (RPPAData) stub.clone();
+			ProteomicsFileRow d = (ProteomicsFileRow) stub.clone();
 			d.vals = getValues(d.id, samples);
 			set.add(d);
 		}
@@ -240,7 +240,7 @@ public class RPPAReader
 		List<String> sList = new ArrayList<>(reader.getSamples());
 		Collections.sort(sList);
 		String[] samples = sList.toArray(new String[sList.size()]);
-		for (RPPAData data : reader.getAssociatedData("AKT1", samples))
+		for (ProteomicsFileRow data : reader.getAssociatedData("AKT1", samples))
 		{
 			System.out.println(data.toString());
 		}

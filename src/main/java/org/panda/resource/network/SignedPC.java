@@ -14,6 +14,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * Serves the signed and directed version of Pathway Commons that contains edges: phosphorylates, dephosphorylates,
+ * upregulates-expression, and downregulates-expression.
+ *
  * @author Ozgun Babur
  */
 public class SignedPC extends PathwayCommons

@@ -1,9 +1,6 @@
 package org.panda.resource.tcga;
 
 import org.panda.resource.PhosphoSitePlus;
-import org.panda.utility.ArrayUtil;
-import org.panda.utility.statistics.Summary;
-import org.panda.utility.statistics.TTest;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -13,7 +10,7 @@ import java.util.*;
 /**
  * @author Ozgun Babur
  */
-public class RPPAData implements Cloneable
+public class ProteomicsFileRow implements Cloneable
 {
 	public String id;
 	public double[] vals;
@@ -23,7 +20,7 @@ public class RPPAData implements Cloneable
 	public String[] header;
 	Type type;
 
-	public RPPAData(String id, double[] vals, List<String> genes, Map<String, List<String>> sites)
+	public ProteomicsFileRow(String id, double[] vals, List<String> genes, Map<String, List<String>> sites)
 	{
 		this.id = id;
 		this.vals = vals;
@@ -91,7 +88,7 @@ public class RPPAData implements Cloneable
 	@Override
 	public boolean equals(Object obj)
 	{
-		return obj instanceof RPPAData && id.equals(((RPPAData) obj).id);
+		return obj instanceof ProteomicsFileRow && id.equals(((ProteomicsFileRow) obj).id);
 	}
 
 	@Override
@@ -142,7 +139,7 @@ public class RPPAData implements Cloneable
 	{
 		try
 		{
-			RPPAData clone = (RPPAData) super.clone();
+			ProteomicsFileRow clone = (ProteomicsFileRow) super.clone();
 
 //			clone.vals = vals.clone();
 
@@ -161,7 +158,7 @@ public class RPPAData implements Cloneable
 	}
 
 
-	public static void write(Collection<RPPAData> datas, String filename)
+	public static void write(Collection<ProteomicsFileRow> datas, String filename)
 	{
 		try
 		{
@@ -169,8 +166,8 @@ public class RPPAData implements Cloneable
 
 			writer.write("ID\tSymbol\tSite\tEffect");
 
-			Iterator<RPPAData> iter = datas.iterator();
-			RPPAData sample = iter.next();
+			Iterator<ProteomicsFileRow> iter = datas.iterator();
+			ProteomicsFileRow sample = iter.next();
 			while (sample.isActivity()) sample = iter.next();
 
 			for (int i = 0; i < sample.vals.length; i++)
@@ -178,7 +175,7 @@ public class RPPAData implements Cloneable
 				writer.write(sample.header == null ? "\tv" + i : "\t" + sample.header[i]);
 			}
 
-			for (RPPAData data : datas)
+			for (ProteomicsFileRow data : datas)
 			{
 				if (data.isActivity()) continue;
 
@@ -228,12 +225,12 @@ public class RPPAData implements Cloneable
 		EXPRESSION
 	}
 
-	public static List<RPPAData> copy(List<RPPAData> orig)
+	public static List<ProteomicsFileRow> copy(List<ProteomicsFileRow> orig)
 	{
-		List<RPPAData> list = new ArrayList<RPPAData>();
-		for (RPPAData data : orig)
+		List<ProteomicsFileRow> list = new ArrayList<ProteomicsFileRow>();
+		for (ProteomicsFileRow data : orig)
 		{
-			list.add((RPPAData) data.clone());
+			list.add((ProteomicsFileRow) data.clone());
 		}
 		return list;
 	}

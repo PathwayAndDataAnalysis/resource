@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.Scanner;
 
 /**
+ * Serves the PhosphoNetworks database.
+ *
  * @author Ozgun Babur
  */
 public class PhosphoNetworks extends FileServer

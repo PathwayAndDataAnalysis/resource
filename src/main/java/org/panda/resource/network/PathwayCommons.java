@@ -15,6 +15,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
+ * Serves Pathway Commons SIF graphs.
+ *
  * @author Ozgun Babur
  */
 public class PathwayCommons extends FileServer
@@ -27,6 +29,9 @@ public class PathwayCommons extends FileServer
 		return instance;
 	}
 
+	/**
+	 * Gets a graph that is a merge of the desired SIF types.
+	 */
 	public Graph getGraph(SIFType... types)
 	{
 		if (fileExists(types))
@@ -62,6 +67,9 @@ public class PathwayCommons extends FileServer
 		return true;
 	}
 
+	/**
+	 * Returns the graph for the given SIF type.
+	 */
 	public Graph getSingleGraph(SIFType type)
 	{try{
 		String edgeType = type.getTag();
@@ -134,6 +142,9 @@ public class PathwayCommons extends FileServer
 //		printMostConnected(getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF), 500);
 	}
 
+	/**
+	 * Prints graph statistics.
+	 */
 	private void printNetworkSizes()
 	{
 		Graph graph = getGraph(SIFEnum.values());

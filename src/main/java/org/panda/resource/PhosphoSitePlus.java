@@ -1,6 +1,6 @@
 package org.panda.resource;
 
-import org.panda.resource.tcga.RPPAData;
+import org.panda.resource.tcga.ProteomicsFileRow;
 import org.panda.utility.TermCounter;
 
 import java.io.IOException;
@@ -196,9 +196,9 @@ public class PhosphoSitePlus extends FileServer
 		tc.print();
 	}
 
-	public void fillInMissingEffect(Collection<RPPAData> datas, int proximityThreshold)
+	public void fillInMissingEffect(Collection<ProteomicsFileRow> datas, int proximityThreshold)
 	{
-		for (RPPAData data : datas)
+		for (ProteomicsFileRow data : datas)
 		{
 			if (data.effect != null) continue;
 			if (data.sites == null || data.sites.isEmpty()) continue;
@@ -208,7 +208,7 @@ public class PhosphoSitePlus extends FileServer
 		}
 	}
 
-	public Set<Integer> getEffects(RPPAData data, int proximityThreshold)
+	public Set<Integer> getEffects(ProteomicsFileRow data, int proximityThreshold)
 	{
 		Set<Integer> found = new HashSet<>();
 
@@ -236,18 +236,18 @@ public class PhosphoSitePlus extends FileServer
 		return found;
 	}
 
-	private RPPAData.SiteEffect aggregateEffects(Set<Integer> found)
+	private ProteomicsFileRow.SiteEffect aggregateEffects(Set<Integer> found)
 	{
 		if (found.contains(1))
 		{
-			if (found.contains(-1)) return RPPAData.SiteEffect.COMPLEX;
-			else return RPPAData.SiteEffect.ACTIVATING;
+			if (found.contains(-1)) return ProteomicsFileRow.SiteEffect.COMPLEX;
+			else return ProteomicsFileRow.SiteEffect.ACTIVATING;
 		}
 		else if (found.contains(-1))
 		{
-			return RPPAData.SiteEffect.INHIBITING;
+			return ProteomicsFileRow.SiteEffect.INHIBITING;
 		}
-		else if (!found.isEmpty()) return RPPAData.SiteEffect.COMPLEX;
+		else if (!found.isEmpty()) return ProteomicsFileRow.SiteEffect.COMPLEX;
 		return null;
 	}
 

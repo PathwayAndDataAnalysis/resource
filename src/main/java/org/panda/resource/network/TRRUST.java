@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.Scanner;
 
 /**
+ * Serves the TRRUST database.
+ *
  * @author Ozgun Babur
  */
 public class TRRUST extends FileServer
