@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
+ * Reads and serves TCGA RPPA files.
+ *
  * @author Ozgun Babur
  */
 public class RPPAReader

@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Scanner;
 
 /**
+ * Reads and serves MutSig results.
+ *
  * @author Ozgun Babur
  */
 public class MutSigReader

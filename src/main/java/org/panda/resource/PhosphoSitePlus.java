@@ -10,6 +10,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
+ * Provides phospho-site effects from PhosphoSitePlus.
+ *
  * @author Ozgun Babur
  */
 public class PhosphoSitePlus extends FileServer

@@ -7,10 +7,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Provides genes in OncoKB.
+ *
  * How to update this resource:
  * Go to oncokb.org and click on the "genes" link. All genes should come in one page. Copy everything and paste into
  * a text-only editor. Delete unnecessary portion.
- *
  *
  * @author Ozgun Babur
  */

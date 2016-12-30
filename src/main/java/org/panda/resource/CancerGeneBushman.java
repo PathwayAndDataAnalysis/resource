@@ -9,7 +9,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * A curated cancer gene list from Bushman lab.
  * From http://www.bushmanlab.org/links/genelists
+ *
  * @author Ozgun Babur
  */
 public class CancerGeneBushman extends FileServer

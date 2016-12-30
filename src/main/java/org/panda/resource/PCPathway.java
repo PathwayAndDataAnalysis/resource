@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
+ * Provides pathways and their contents in Pathway Commons. Also runs enrichment analyses.
+ *
  * @author Ozgun Babur
  */
 public class PCPathway extends FileServer

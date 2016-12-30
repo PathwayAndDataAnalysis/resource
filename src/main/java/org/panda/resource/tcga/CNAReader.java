@@ -9,6 +9,8 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
+ * Reads and serves a TCGA Gistic Copy Number file.
+ *
  * @author Ozgun Babur
  */
 public class CNAReader

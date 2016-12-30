@@ -12,6 +12,8 @@ import java.net.URL;
 import java.util.*;
 
 /**
+ * Downloads TCGA data and analysis files from Broad Firehose.
+ *
  * @author Ozgun Babur
  */
 public class BroadDownloader

@@ -1,7 +1,5 @@
 package org.panda.resource;
 
-import org.panda.utility.FileUtil;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Provides ChEBI ID to name conversion.
+ *
  * @author Ozgun Babur
  */
 public class ChEBI extends FileServer

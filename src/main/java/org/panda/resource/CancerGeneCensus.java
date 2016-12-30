@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
+ * COSMIC Cancer Gene Census.
+ *
  * How to update this resource:
  *
  *       Host name:     sftp-cancer.sanger.ac.uk

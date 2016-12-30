@@ -13,6 +13,7 @@ import java.util.zip.ZipInputStream;
 
 /**
  * Utility class for downloading files from a URL.
+ *
  * @author Ozgun Babur
  */
 public class Download

@@ -3,6 +3,8 @@ package org.panda.resource;
 import java.io.File;
 
 /**
+ * Many FileServer classes use this class to know which resource directory to use.
+ *
  * @author Ozgun Babur
  */
 public class ResourceDirectory

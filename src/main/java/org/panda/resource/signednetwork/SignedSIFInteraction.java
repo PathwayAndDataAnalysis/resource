@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * A signed and directed SIF relation.
+ *
  * @author Ozgun Babur
  */
 public class SignedSIFInteraction extends SIFInteraction

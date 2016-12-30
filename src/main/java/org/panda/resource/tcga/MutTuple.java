@@ -1,6 +1,8 @@
 package org.panda.resource.tcga;
 
 /**
+ * This class encodes a single mutation.
+ *
  * @author Ozgun Babur
  */
 public class MutTuple

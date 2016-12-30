@@ -8,10 +8,10 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Base class for resource accessor classes that download a single text file (can be compressed), and loads themselves
- * reading that file.
+ * Base class for resource accessor classes that download text files (can be compressed), and loads themselves reading
+ * these files.
  *
- * Created by babur on 4/19/16.
+ * @author Ozgun Babur
  */
 public abstract class FileServer
 {

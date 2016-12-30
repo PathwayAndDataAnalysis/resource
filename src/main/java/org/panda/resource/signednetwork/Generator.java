@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 
 /**
+ * Generates the signed and directed version Pathway Commons SIF. This graph is produced to use in causality analysis.
+ *
  * @author Ozgun Babur
  */
 public class Generator

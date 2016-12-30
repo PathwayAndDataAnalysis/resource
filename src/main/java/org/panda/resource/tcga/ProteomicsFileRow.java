@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.util.*;
 
 /**
+ * This class represents a single row in a proteimics data file. This also includes TCGA RPPA files.
+ *
  * @author Ozgun Babur
  */
 public class ProteomicsFileRow implements Cloneable

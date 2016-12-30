@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * Enumeration of signed and directed SIF relations.
+ *
  * @author Ozgun Babur
  */
 public enum SignedType implements SIFType

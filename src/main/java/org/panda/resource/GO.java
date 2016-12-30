@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * Provides GO ontology graph.
+ *
  * @author Ozgun Babur
  */
 public class GO extends FileServer

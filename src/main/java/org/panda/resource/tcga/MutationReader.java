@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
+ * Reads and serves a TCGA mutation file.
+ *
  * @author Ozgun Babur
  */
 public class MutationReader

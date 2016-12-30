@@ -8,6 +8,8 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
+ * Reads and serves a TCGA RNA expression file.
+ *
  * @author Ozgun Babur
  */
 public class ExpressionReader
