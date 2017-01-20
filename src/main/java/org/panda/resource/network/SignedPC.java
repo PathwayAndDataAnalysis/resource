@@ -93,13 +93,15 @@ public class SignedPC extends PathwayCommons
 		Map<String, Writer> writers = new HashMap<>();
 		Files.createDirectories(Paths.get(getPrivateDirectory()));
 
+		Set<String> falseSet = new HashSet<>();
+
 		for (String localFilename : getLocalFilenames())
 		{
 			Scanner sc = new Scanner(new File(locateInBase(localFilename)));
 
 			if (localFilename.contains("false"))
 			{
-
+				while (sc.hasNextLine()) falseSet.add(sc.nextLine());
 			}
 			else
 			{
@@ -110,6 +112,9 @@ public class SignedPC extends PathwayCommons
 
 					if (token.length > 2)
 					{
+						// Do not consider the relation if it is in the false set
+						if (falseSet.contains(token[0] + "\t" + token[1] + "\t" + token[2])) continue;
+
 						if (!writers.containsKey(token[1])) writers.put(token[1],
 							new BufferedWriter(new FileWriter(getPrivateDirectory() + token[1] + ".txt")));
 
@@ -141,13 +146,14 @@ public class SignedPC extends PathwayCommons
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{"SignedPC.sif", "curated-signed.sif"};
+		return new String[]{"curated-signed-false.sif", "SignedPC.sif", "curated-signed.sif"};
 	}
 
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{GITHUB_REPO_BASE + "SignedPC.sif.gz", GITHUB_REPO_BASE + "curated-signed.sif"};
+		return new String[]{GITHUB_REPO_BASE + "curated-signed-false.sif", GITHUB_REPO_BASE + "SignedPC.sif.gz",
+			GITHUB_REPO_BASE + "curated-signed.sif"};
 	}
 
 	public static void main(String[] args)
