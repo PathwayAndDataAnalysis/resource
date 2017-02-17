@@ -1,9 +1,13 @@
 package org.panda.resource;
 
+import org.panda.resource.network.SignedPC;
+import org.panda.utility.graph.Graph;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -88,10 +92,27 @@ public class CancerGeneCensus extends FileServer
 
 	public static void main(String[] args)
 	{
+		Set<String> genes = SignedPC.get().getAllGraphs().values().stream().map(Graph::getSymbols).flatMap(Collection::stream).collect(Collectors.toSet());
+		System.out.println("genes.size() = " + genes.stream().filter(s -> !s.startsWith("MIR")).count());
+
+		Set<String> hgnc = HGNC.get().getAllSymbols();
+		genes.retainAll(hgnc);
+
+		System.out.println("hgnc = " + hgnc.size());
+		System.out.println("genes = " + genes.size());
+
 //		System.out.println(getAllSymbols().contains("LLP"));
 
-		Set<String> genes = HGNC.get().getSymbolsOfChromosome("1q");
-		genes.retainAll(CancerGeneCensus.get().getAllSymbols());
-		System.out.println("genes = " + genes);
+//		Set<String> genes = HGNC.get().getSymbolsOfChromosome("1q");
+//		genes.retainAll(CancerGeneCensus.get().getAllSymbols());
+//		System.out.println("genes = " + genes);
+
+		Set<String> onco = new HashSet<>(OncoKB.get().getAllSymbols());
+		onco.addAll(get().getAllSymbols());
+		System.out.println("onco.size() = " + onco.size());
+
+		genes.retainAll(onco);
+		System.out.println("genes.size() = " + genes.size());
+
 	}
 }

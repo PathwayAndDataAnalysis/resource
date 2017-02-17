@@ -40,32 +40,8 @@ public class PP3 extends CSCOBothControllerAndParticipantMiner
 	@Override
 	public Set<SIFInteraction> createSIFInteraction(Match m, IDFetcher fetcher)
 	{
-		BioPAXElement sourceER = m.get(this.getSourceLabel(), getPattern());
-		BioPAXElement targetER = m.get(this.getTargetLabel(), getPattern());
-
-		Set<String> sources = fetcher.fetchID(sourceER);
-		Set<String> targets = fetcher.fetchID(targetER);
-
-		SIFType sifType = this.getSIFType();
-
-		Set<SIFInteraction> set = new HashSet<>();
-
-		for (String source : sources)
-		{
-			for (String target : targets)
-			{
-				if (source.equals(target)) continue;
-
-				set.add(new SignedSIFInteraction(source, target, sourceER, targetER, sifType,
-					new HashSet<>(m.get(getMediatorLabels(), getPattern())),
-					new HashSet<>(m.get(getSourcePELabels(), getPattern())),
-					new HashSet<>(m.get(getTargetPELabels(), getPattern())),
-					DifferentialModificationUtil.collectChangedPhosphorylationSites(
-						(PhysicalEntity) m.get("input simple PE", getPattern()),
-						(PhysicalEntity) m.get("output simple PE", getPattern()),
-						getSIFType().equals(SignedType.PHOSPHORYLATES))));
-			}
-		}
-		return set;
+		PhosphoInteractionCreator pic = new PhosphoInteractionCreator(this);
+		return pic.create(m, fetcher, getSIFType().equals(SignedType.PHOSPHORYLATES));
 	}
+
 }

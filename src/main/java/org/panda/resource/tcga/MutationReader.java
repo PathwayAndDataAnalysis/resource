@@ -54,7 +54,7 @@ public class MutationReader
 			if (protChInd < 0)
 			{
 				System.out.println("No protein change in file " + filename);
-				return;
+//				return;
 			}
 
 		}
@@ -73,12 +73,12 @@ public class MutationReader
 		{
 			String id = token[0];
 			String sample = token[sampleInd];
-			sample = sample.substring(0, 15);
+			sample = sample.substring(0, 12);
 			sampleSet.add(sample);
 
 			String type = token[typeInd];
 
-			String protCh = token.length <= protChInd ? "" : token[protChInd];
+			String protCh = protChInd < 0 || token.length <= protChInd ? "" : token[protChInd];
 			if (protCh.startsWith("p.")) protCh = protCh.substring(2);
 			else if (protCh.equals(".") || protCh.equals("NULL")) protCh = "";
 

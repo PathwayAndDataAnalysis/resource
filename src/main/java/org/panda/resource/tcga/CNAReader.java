@@ -66,7 +66,7 @@ public class CNAReader
 
 		for (int i = ss; i < header.length; i++)
 		{
-			header[i] = header[i].substring(0, 15);
+			header[i] = header[i].substring(0, 12);
 		}
 
 		while (sc.hasNextLine())

@@ -239,8 +239,8 @@ public class BroadDownloader
 //		List<String> codes = getStudyCodes("2015_08_21");
 //		System.out.println(codes);
 
-//		download("2015_08_21", "/home/babur/Documents/TCGA/BRCA", "BRCA");
+		download("2016_01_28", "/home/babur/Documents/TCGA/UVM", "UVM");
 
-		downloadAll("2015_08_21", "/home/babur/Documents/TCGA");
+//		downloadAll("2016_01_28", "/home/babur/Documents/TCGA");
 	}
 }

@@ -70,6 +70,10 @@ public class TRRUST extends FileServer
 			if (token[2].equals("Repression")) negative.putRelation(token[0], token[1], true);
 			unsigned.putRelation(token[0], token[1], true);
 		}
+
+		// Remove manually detected errors
+		negative.removeRelation("ATM", "CDKN1A", true);
+
 		return true;
 	}
 

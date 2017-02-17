@@ -47,32 +47,17 @@ public class PP1 extends ControlsStateChangeOfMiner
 	@Override
 	public Set<SIFInteraction> createSIFInteraction(Match m, IDFetcher fetcher)
 	{
-		BioPAXElement sourceER = m.get(this.getSourceLabel(), getPattern());
-		BioPAXElement targetER = m.get(this.getTargetLabel(), getPattern());
+		PhosphoInteractionCreator pic = new PhosphoInteractionCreator(this);
+		return pic.create(m, fetcher, useGainedSite(m));
+	}
 
-		Set<String> sources = fetcher.fetchID(sourceER);
-		Set<String> targets = fetcher.fetchID(targetER);
+	protected boolean useGainedSite(Match m)
+	{
+		boolean ctrlSign = new ControlSignConstraint(ControlSignConstraint.Sign.POSITIVE)
+			.satisfies(m, getPattern().indexOf("Control"));
 
-		SIFType sifType = this.getSIFType();
+		boolean edgeSign = getSIFType().equals(SignedType.PHOSPHORYLATES);
 
-		Set<SIFInteraction> set = new HashSet<>();
-
-		for (String source : sources)
-		{
-			for (String target : targets)
-			{
-				if (source.equals(target)) continue;
-
-				set.add(new SignedSIFInteraction(source, target, sourceER, targetER, sifType,
-					new HashSet<>(m.get(getMediatorLabels(), getPattern())),
-					new HashSet<>(m.get(getSourcePELabels(), getPattern())),
-					new HashSet<>(m.get(getTargetPELabels(), getPattern())),
-					DifferentialModificationUtil.collectChangedPhosphorylationSites(
-						(PhysicalEntity) m.get("input simple PE", getPattern()),
-						(PhysicalEntity) m.get("output simple PE", getPattern()),
-						getSIFType().equals(SignedType.PHOSPHORYLATES))));
-			}
-		}
-		return set;
+		return edgeSign == ctrlSign;
 	}
 }

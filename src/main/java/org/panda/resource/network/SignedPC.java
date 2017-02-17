@@ -93,7 +93,7 @@ public class SignedPC extends PathwayCommons
 		Map<String, Writer> writers = new HashMap<>();
 		Files.createDirectories(Paths.get(getPrivateDirectory()));
 
-		Set<String> falseSet = new HashSet<>();
+		Map<String, Set<String>> falseMap = new HashMap<>();
 
 		for (String localFilename : getLocalFilenames())
 		{
@@ -101,7 +101,18 @@ public class SignedPC extends PathwayCommons
 
 			if (localFilename.contains("false"))
 			{
-				while (sc.hasNextLine()) falseSet.add(sc.nextLine());
+				while (sc.hasNextLine())
+				{
+					String line = sc.nextLine();
+					if (line.startsWith("#") || line.isEmpty()) continue;
+					String[] token = line.split("\t");
+					if (token.length == 3) falseMap.put(line, Collections.emptySet());
+					else
+					{
+						falseMap.put(token[0] + "\t" + token[1] + "\t" + token[2],
+							new HashSet<>(Arrays.asList(token[3].split(";"))));
+					}
+				}
 			}
 			else
 			{
@@ -113,7 +124,17 @@ public class SignedPC extends PathwayCommons
 					if (token.length > 2)
 					{
 						// Do not consider the relation if it is in the false set
-						if (falseSet.contains(token[0] + "\t" + token[1] + "\t" + token[2])) continue;
+						String key = token[0] + "\t" + token[1] + "\t" + token[2];
+						Set<String> falseSites = falseMap.get(key);
+						Set<String> sites = null;
+						if (falseSites != null)
+						{
+							if (falseSites.isEmpty()) continue;
+							if (token.length <= 4) continue;
+							sites = new HashSet<>(Arrays.asList(token[4].split(";")));
+							sites.removeAll(falseSites);
+							if (sites.isEmpty()) continue;
+						}
 
 						if (!writers.containsKey(token[1])) writers.put(token[1],
 							new BufferedWriter(new FileWriter(getPrivateDirectory() + token[1] + ".txt")));
@@ -126,7 +147,9 @@ public class SignedPC extends PathwayCommons
 						}
 						if (token.length > 4)
 						{
-							writers.get(token[1]).write("\t" + token[4]);
+							if (falseMap.containsKey(key))
+								writers.get(token[1]).write("\t" + CollectionUtil.merge(sites, ";"));
+							else writers.get(token[1]).write("\t" + token[4]);
 						}
 
 						writers.get(token[1]).write("\n");
@@ -140,7 +163,7 @@ public class SignedPC extends PathwayCommons
 			writer.close();
 		}
 
-		return Files.deleteIfExists(Paths.get(locateInBase(getLocalFilenames()[0])));
+		return true;
 	}catch (IOException e){throw new RuntimeException(e);}}
 
 	@Override
