@@ -49,10 +49,9 @@ public class SignedSIFInteraction extends SIFInteraction
 		}
 	}
 
-	@Override
-	public String toString(boolean withMediators)
+	public String toString()
 	{
-		String s = super.toString(withMediators) + "\t";
+		String s = super.toString() + "\t" + this.getMediatorsInString() + "\t";
 
 		for (String site : changedPhospho)
 		{
