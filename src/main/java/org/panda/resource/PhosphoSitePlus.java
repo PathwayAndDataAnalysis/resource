@@ -116,8 +116,9 @@ public class PhosphoSitePlus extends FileServer
 		typeMap = new HashMap<>();
 		actualMap = new HashMap<>();
 
-		Files.lines(Paths.get(locateInBase(getLocalFilenames()[1]))).map(line -> line.split("\\s+"))
-			.filter(token -> token.length > 2).forEach(token -> {
+		Files.lines(Paths.get(locateInBase(getLocalFilenames()[1]))).filter(l -> !l.startsWith("#"))
+			.map(line -> line.split("\\s+")).filter(token -> token.length > 2).forEach(token ->
+		{
 			String gene = token[0];
 
 			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
