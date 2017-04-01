@@ -64,9 +64,9 @@ public class PhosphoNetworks extends FileServer
 				String source = token[2];
 				String site = token[1];
 
-				if (!graph.hasDirectedEdge(source, target))
+				if (!graph.hasRelation(source, target))
 				{
-					graph.putRelation(source, target, "", true, site);
+					graph.putRelation(source, target, "", site);
 				}
 				else
 				{

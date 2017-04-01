@@ -1,6 +1,8 @@
 package org.panda.resource;
 
+import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
+import org.panda.utility.graph.UndirectedGraph;
 
 import java.io.IOException;
 import java.util.*;
@@ -177,15 +179,17 @@ public class HGNC extends FileServer
 
 	public Graph getCompleteClique(boolean directed)
 	{
-		Graph graph = new Graph("HGNC complete clique", "clique-edge");
+		Graph graph = directed ? new DirectedGraph("HGNC complete clique", "clique-edge") :
+			new UndirectedGraph("HGNC complete clique", "clique-edge");
+
 		for (String s1 : sym2id.keySet())
 		{
 			for (String s2 : sym2id.keySet())
 			{
 				if (s1.equals(s2)) continue;
 				if (!directed && s2.compareTo(s1) < 0) continue;
-				graph.putRelation(s1, s2, directed);
-				if (directed) graph.putRelation(s2, s1, directed);
+				graph.putRelation(s1, s2);
+				if (directed) graph.putRelation(s2, s1);
 			}
 		}
 		return graph;

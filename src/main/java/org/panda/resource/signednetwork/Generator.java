@@ -1,14 +1,16 @@
 package org.panda.resource.signednetwork;
 
+import org.biopax.paxtools.controller.PathAccessor;
 import org.biopax.paxtools.io.SimpleIOHandler;
+import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
-import org.biopax.paxtools.model.level3.RelationshipXref;
-import org.biopax.paxtools.model.level3.XReferrable;
-import org.biopax.paxtools.model.level3.Xref;
+import org.biopax.paxtools.model.level3.*;
+import org.biopax.paxtools.model.level3.Process;
 import org.biopax.paxtools.pattern.miner.IDFetcher;
 import org.biopax.paxtools.pattern.miner.SIFInteraction;
 import org.biopax.paxtools.pattern.miner.SIFSearcher;
+import org.biopax.paxtools.pattern.miner.SIFToText;
 import org.biopax.paxtools.pattern.util.Blacklist;
 import org.panda.utility.Kronometre;
 
@@ -28,17 +30,20 @@ public class Generator
 	public static void main(String[] args) throws IOException
 	{
 		String dir = "/home/babur/Documents/PC/";
+//		String dir = "/media/babur/6TB1/REACH-cards/";
 		SimpleIOHandler h = new SimpleIOHandler(BioPAXLevel.L3);
 		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons.8.Detailed.BIOPAX.owl"));
-//		Model model = h.convertFromOWL(new FileInputStream(dir + "temp.owl"));
+//		Model model = h.convertFromOWL(new FileInputStream(dir + "REACH.owl"));
+		removeTRANSFAC(model);
 		System.out.println("Model size = " + model.getObjects().size());
 //		BlacklistGenerator gen = new BlacklistGenerator();
 //		Blacklist blacklist = gen.generateBlacklist(model);
 //		blacklist.write(new FileOutputStream("../biopax-pattern/blacklist.txt"));
 		Blacklist blacklist = new Blacklist(dir + "blacklist.txt");
+//		Blacklist blacklist = null;
 
-		generate(model, blacklist, dir + "SignedPC.sif");
-//		generate(model, blacklist, dir + "temp.sif");
+//		generate(model, blacklist, dir + "SignedREACH.sif");
+		generate(model, blacklist, dir + "SignedPC-woTF.sif");
 	}
 
 	public static void generate(Model model, Blacklist blacklist, String outFile) throws IOException
@@ -71,7 +76,7 @@ public class Generator
 
 		System.out.println("Positive phospho = " + pp.size());
 
-		searcher = new SIFSearcher(idFetcher, new PN1(), new PN2(), new PN3(), new PN4());
+		searcher = new SIFSearcher(idFetcher, new PN1());//, new PN2(), new PN3(), new PN4());
 		searcher.setBlacklist(blacklist);
 		Set<SignedSIFInteraction> pn = (Set<SignedSIFInteraction>) (Set<?>) searcher.searchSIF(model);
 
@@ -101,11 +106,25 @@ public class Generator
 		sifs.addAll(ep);
 		sifs.addAll(en);
 
+		SIFToText stt = inter -> {
+			String s = inter.toString();
+			s += "\t" + inter.getMediatorsInString() + "\t";
+			if (inter instanceof SignedSIFInteraction)
+			{
+				for (String site : ((SignedSIFInteraction) inter).changedPhospho)
+				{
+					s += site + ";";
+				}
+				if (s.endsWith(";")) s = s.substring(0, s.length() - 1);
+			}
+			return s;
+		};
+
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
 
 		for (SIFInteraction sif : sifs)
 		{
-			writer.write(sif.toString() + "\n");
+			writer.write(stt.convert(sif) + "\n");
 		}
 
 		writer.close();
@@ -265,5 +284,34 @@ public class Generator
 			set.add(woType(sif));
 		}
 		return set;
+	}
+
+	private static void removeTRANSFAC(Model model)
+	{
+		PathAccessor pa = new PathAccessor("Control/dataSource/name");
+		Set<Control> rem = new HashSet<>();
+
+		for (Control control : model.getObjects(Control.class))
+		{
+			Set dsNames = pa.getValueFromBean(control);
+			if (dsNames.contains("TRANSFAC") || dsNames.contains("CTD"))
+			{
+				for (Controller controller : control.getController())
+				{
+					control.removeController(controller);
+				}
+				for (Process process : control.getControlled())
+				{
+					control.removeControlled(process);
+				}
+				rem.add(control);
+			}
+		}
+
+		System.out.println("rem.size() = " + rem.size());
+		for (Entity entity : rem)
+		{
+			model.remove(entity);
+		}
 	}
 }

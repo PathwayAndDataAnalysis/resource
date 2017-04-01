@@ -3,6 +3,7 @@ package org.panda.resource.network;
 import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.panda.resource.FileServer;
 import org.panda.resource.signednetwork.SignedType;
+import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
 
 import java.io.File;
@@ -18,9 +19,9 @@ public class TRRUST extends FileServer
 {
 	private static TRRUST instance;
 
-	private Graph unsigned;
-	private Graph positive;
-	private Graph negative;
+	private DirectedGraph unsigned;
+	private DirectedGraph positive;
+	private DirectedGraph negative;
 
 	public static TRRUST get()
 	{
@@ -58,21 +59,21 @@ public class TRRUST extends FileServer
 	@Override
 	public boolean load() throws IOException
 	{
-		unsigned = new Graph("TRRUST all", SIFEnum.CONTROLS_EXPRESSION_OF.getTag());
-		positive = new Graph("TRRUST positive", SignedType.UPREGULATES_EXPRESSION.getTag());
-		negative = new Graph("TRRUST negative", SignedType.DOWNREGULATES_EXPRESSION.getTag());
+		unsigned = new DirectedGraph("TRRUST all", SIFEnum.CONTROLS_EXPRESSION_OF.getTag());
+		positive = new DirectedGraph("TRRUST positive", SignedType.UPREGULATES_EXPRESSION.getTag());
+		negative = new DirectedGraph("TRRUST negative", SignedType.DOWNREGULATES_EXPRESSION.getTag());
 
 		Scanner scanner = new Scanner(new File(locateInBase(getLocalFilenames()[0])));
 		while (scanner.hasNextLine())
 		{
 			String[] token = scanner.nextLine().split("\t");
-			if (token[2].equals("Activation")) positive.putRelation(token[0], token[1], true);
-			if (token[2].equals("Repression")) negative.putRelation(token[0], token[1], true);
-			unsigned.putRelation(token[0], token[1], true);
+			if (token[2].equals("Activation")) positive.putRelation(token[0], token[1]);
+			if (token[2].equals("Repression")) negative.putRelation(token[0], token[1]);
+			unsigned.putRelation(token[0], token[1]);
 		}
 
 		// Remove manually detected errors
-		negative.removeRelation("ATM", "CDKN1A", true);
+		negative.removeRelation("ATM", "CDKN1A");
 
 		return true;
 	}

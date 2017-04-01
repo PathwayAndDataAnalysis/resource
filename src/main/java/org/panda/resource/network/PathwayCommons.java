@@ -5,8 +5,10 @@ import org.biopax.paxtools.pattern.miner.SIFType;
 import org.panda.resource.FileServer;
 import org.panda.resource.ResourceDirectory;
 import org.panda.utility.StringUtil;
+import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
 import org.panda.utility.graph.GraphList;
+import org.panda.utility.graph.UndirectedGraph;
 
 import java.io.*;
 import java.net.URL;
@@ -73,17 +75,18 @@ public class PathwayCommons extends FileServer
 	public Graph getSingleGraph(SIFType type)
 	{try{
 		String edgeType = type.getTag();
-		Graph graph = new Graph("Pathway Commons", edgeType);
+		Graph graph = type.isDirected() ?
+			new DirectedGraph("Pathway Commons", edgeType) : new UndirectedGraph("Pathway Commons", edgeType);
 
 		Files.lines(Paths.get(getPrivateDirectory() + type.getTag() + ".txt"))
 			.map(line -> line.split("\t")).forEach(token -> {
 			if (token.length > 2)
 			{
-				graph.putRelation(token[0], token[1], token[2], type.isDirected());
+				graph.putRelation(token[0], token[1], token[2]);
 			}
 			else
 			{
-				graph.putRelation(token[0], token[1], type.isDirected());
+				graph.putRelation(token[0], token[1]);
 			}
 		});
 

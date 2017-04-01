@@ -15,59 +15,46 @@ import java.util.Set;
  *
  * @author Ozgun Babur
  */
-public class SignedREACH extends SignedPC
+public class SignedPCNoTransfac extends SignedPC
 {
-	private static SignedREACH instance;
+	private static SignedPCNoTransfac instance;
 
-	public static SignedREACH get()
+	public static SignedPCNoTransfac get()
 	{
-		if (instance == null) instance = new SignedREACH();
+		if (instance == null) instance = new SignedPCNoTransfac();
 		return instance;
-	}
-
-	public Map<SignedType, DirectedGraph> getAllGraphs()
-	{
-		Map<SignedType, DirectedGraph> map = new HashMap<>();
-		for (SignedType type : SignedType.values())
-		{
-			if (type.isPhospho())
-			{
-				map.put(type, getGraph(type));
-			}
-		}
-		return map;
 	}
 
 	protected String getPrivateDirectory()
 	{
-		return ResourceDirectory.get() + File.separator + "SignedREACH/";
+		return ResourceDirectory.get() + File.separator + "SignedPCNoTransfac/";
 	}
 
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{"SignedREACH.sif"};
+		return new String[]{"curated-signed-false.sif", "SignedPC-woTF.sif", "curated-signed.sif"};
 	}
 
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{GITHUB_REPO_BASE + "SignedREACH.sif.gz"};
+		return new String[]{GITHUB_REPO_BASE + "curated-signed-false.sif", GITHUB_REPO_BASE + "SignedPC-woTF.sif.gz",
+			GITHUB_REPO_BASE + "curated-signed.sif"};
 	}
 
 	public static void main(String[] args)
 	{
 		printNetworkSizes();
-		DirectedGraph graph = SignedREACH.get().getGraph(SignedType.PHOSPHORYLATES);
+		DirectedGraph graph = SignedPCNoTransfac.get().getGraph(SignedType.PHOSPHORYLATES);
 		Set<String> set = graph.getDownstream("TP53");
 	}
 
 	private static void printNetworkSizes()
 	{
-		SignedREACH spc = new SignedREACH();
+		SignedPCNoTransfac spc = new SignedPCNoTransfac();
 		for (SignedType type : SignedType.values())
 		{
-
 			spc.getGraph(type).printStats();
 		}
 	}

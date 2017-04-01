@@ -48,23 +48,4 @@ public class SignedSIFInteraction extends SIFInteraction
 			}
 		}
 	}
-
-	public String toString()
-	{
-		String s = super.toString() + "\t" + this.getMediatorsInString() + "\t";
-
-		for (String site : changedPhospho)
-		{
-			s += site + ";";
-		}
-		if (s.endsWith(";")) s = s.substring(0, s.length() - 1);// + "\t";
-
-//		for (String pmid : getPubmedIDs())
-//		{
-//			s += pmid + " ";
-//		}
-//		if (s.endsWith(" ")) s = s.substring(0, s.length() - 1);
-
-		return s;
-	}
 }

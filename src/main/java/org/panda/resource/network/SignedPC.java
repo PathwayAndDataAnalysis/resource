@@ -4,6 +4,7 @@ import org.biopax.paxtools.pattern.miner.SIFType;
 import org.panda.resource.ResourceDirectory;
 import org.panda.resource.signednetwork.SignedType;
 import org.panda.utility.CollectionUtil;
+import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
 import org.panda.utility.graph.PhosphoGraph;
 
@@ -29,9 +30,9 @@ public class SignedPC extends PathwayCommons
 		return instance;
 	}
 
-	public Map<SignedType, Graph> getAllGraphs()
+	public Map<SignedType, DirectedGraph> getAllGraphs()
 	{
-		Map<SignedType, Graph> map = new HashMap<>();
+		Map<SignedType, DirectedGraph> map = new HashMap<>();
 		for (SignedType type : SignedType.values())
 		{
 			map.put(type, getGraph(type));
@@ -44,7 +45,7 @@ public class SignedPC extends PathwayCommons
 		return ResourceDirectory.get() + File.separator + "SignedPC/";
 	}
 
-	public Graph getGraph(SIFType... types)
+	public DirectedGraph getGraph(SIFType... types)
 	{try{
 		String edgeType = CollectionUtil.merge(
 			Arrays.stream(types).map(SIFType::getTag).collect(Collectors.toList()), ",");
@@ -54,8 +55,8 @@ public class SignedPC extends PathwayCommons
 
 		if (fileExists(types))
 		{
-			Graph graph = phos ? new PhosphoGraph("Signed PC", edgeType) :
-				new Graph("Signed PC", edgeType);
+			DirectedGraph graph = phos ? new PhosphoGraph("Signed PC", edgeType) :
+				new DirectedGraph("Signed PC", edgeType);
 
 			for (SIFType type : types)
 			{
@@ -65,14 +66,14 @@ public class SignedPC extends PathwayCommons
 					{
 						if (phos && token.length > 3)
 						{
-							((PhosphoGraph) graph).putRelation(token[0], token[1], token[2], type.isDirected(), token[3]);
+							((PhosphoGraph) graph).putRelation(token[0], token[1], token[2], token[3]);
 						} else
 						{
-							graph.putRelation(token[0], token[1], token[2], type.isDirected());
+							graph.putRelation(token[0], token[1], token[2]);
 						}
 					} else
 					{
-						graph.putRelation(token[0], token[1], type.isDirected());
+						graph.putRelation(token[0], token[1]);
 					}
 				});
 			}
@@ -182,7 +183,7 @@ public class SignedPC extends PathwayCommons
 	public static void main(String[] args)
 	{
 		printNetworkSizes();
-		Graph graph = SignedPC.get().getGraph(SignedType.PHOSPHORYLATES);
+		DirectedGraph graph = SignedPC.get().getGraph(SignedType.PHOSPHORYLATES);
 		Set<String> set = graph.getDownstream("TP53");
 	}
 

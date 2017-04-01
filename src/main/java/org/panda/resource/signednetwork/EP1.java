@@ -1,12 +1,7 @@
 package org.panda.resource.signednetwork;
 
-import org.biopax.paxtools.pattern.MappedConst;
 import org.biopax.paxtools.pattern.Pattern;
-import org.biopax.paxtools.pattern.constraint.AND;
-import org.biopax.paxtools.pattern.constraint.ModificationChangeConstraint;
-import org.biopax.paxtools.pattern.constraint.OR;
 import org.biopax.paxtools.pattern.miner.ControlsExpressionMiner;
-import org.biopax.paxtools.pattern.miner.ControlsStateChangeOfMiner;
 
 /**
  * @author Ozgun Babur
