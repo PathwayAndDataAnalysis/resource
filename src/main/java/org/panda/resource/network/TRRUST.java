@@ -34,12 +34,12 @@ public class TRRUST extends FileServer
 		return unsigned;
 	}
 
-	public Graph getPositiveGraph()
+	public DirectedGraph getPositiveGraph()
 	{
 		return positive;
 	}
 
-	public Graph getNegativeGraph()
+	public DirectedGraph getNegativeGraph()
 	{
 		return negative;
 	}
@@ -74,23 +74,27 @@ public class TRRUST extends FileServer
 
 		// Remove manually detected errors
 		negative.removeRelation("ATM", "CDKN1A");
+		positive.removeRelation("RB1", "CDKN1A");
 
 		return true;
 	}
 
 	public static void main(String[] args)
 	{
-		Graph upPC = SignedPC.get().getGraph(SignedType.UPREGULATES_EXPRESSION);
-		Graph dwPC = SignedPC.get().getGraph(SignedType.DOWNREGULATES_EXPRESSION);
-		Graph allPC = PathwayCommons.get().getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
-		Graph pos = get().getPositiveGraph();
-		Graph neg = get().getNegativeGraph();
-		Graph uns = get().getUnsignedGraph();
+//		Graph upPC = SignedPC.get().getGraph(SignedType.UPREGULATES_EXPRESSION);
+//		Graph dwPC = SignedPC.get().getGraph(SignedType.DOWNREGULATES_EXPRESSION);
+//		Graph allPC = PathwayCommons.get().getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
+//		Graph pos = get().getPositiveGraph();
+//		Graph neg = get().getNegativeGraph();
+//		Graph uns = get().getUnsignedGraph();
+//
+//		allPC.printVennIntersections(uns);
+//		System.out.println();
+//		upPC.printVennIntersections(pos);
+//		System.out.println();
+//		dwPC.printVennIntersections(neg);
 
-		allPC.printVennIntersections(uns);
-		System.out.println();
-		upPC.printVennIntersections(pos);
-		System.out.println();
-		dwPC.printVennIntersections(neg);
+		boolean contains = get().getNegativeGraph().getDownstream("TP53").contains("BCL2");
+		System.out.println("contains = " + contains);
 	}
 }

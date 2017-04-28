@@ -80,9 +80,7 @@ public class PhosphoNetworks extends FileServer
 
 	public static void main(String[] args)
 	{
-		Graph pc = SignedPC.get().getGraph(SignedType.PHOSPHORYLATES);
 		Graph pn = get().getGraph();
 
-		pc.printVennIntersections(pn);
 	}
 }

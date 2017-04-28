@@ -45,9 +45,10 @@ public class SignedPCNoTransfac extends SignedPC
 
 	public static void main(String[] args)
 	{
-		printNetworkSizes();
-		DirectedGraph graph = SignedPCNoTransfac.get().getGraph(SignedType.PHOSPHORYLATES);
-		Set<String> set = graph.getDownstream("TP53");
+//		printNetworkSizes();
+		DirectedGraph graph = SignedPCNoTransfac.get().getGraph(SignedType.UPREGULATES_EXPRESSION);
+		Set<String> set = graph.getDownstream("RB1");
+		System.out.println("set.contains(\"MYC\") = " + set.contains("MYC"));
 	}
 
 	private static void printNetworkSizes()
