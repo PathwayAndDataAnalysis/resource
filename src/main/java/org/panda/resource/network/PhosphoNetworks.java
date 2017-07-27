@@ -80,7 +80,8 @@ public class PhosphoNetworks extends FileServer
 
 	public static void main(String[] args)
 	{
-		Graph pn = get().getGraph();
-
+		PhosphoGraph pn = get().getGraph();
+		boolean contains = pn.getDownstream("MAPK14").contains("MAPKAPK2");
+		System.out.println("contains = " + contains);
 	}
 }

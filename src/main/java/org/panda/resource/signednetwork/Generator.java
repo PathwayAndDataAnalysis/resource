@@ -33,6 +33,7 @@ public class Generator
 //		String dir = "/media/babur/6TB1/REACH-cards/";
 		SimpleIOHandler h = new SimpleIOHandler(BioPAXLevel.L3);
 		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons.8.Detailed.BIOPAX.owl"));
+//		Model model = h.convertFromOWL(new FileInputStream(dir + "temp.owl"));
 //		Model model = h.convertFromOWL(new FileInputStream(dir + "REACH.owl"));
 		removeTRANSFAC(model);
 		System.out.println("Model size = " + model.getObjects().size());
@@ -42,8 +43,8 @@ public class Generator
 		Blacklist blacklist = new Blacklist(dir + "blacklist.txt");
 //		Blacklist blacklist = null;
 
-//		generate(model, blacklist, dir + "SignedREACH.sif");
-		generate(model, blacklist, dir + "SignedPC-woTF.sif");
+		generate(model, blacklist, dir + "SignedREACH-woTF2.sif");
+//		generate(model, null, dir + "temp.sif");
 	}
 
 	public static void generate(Model model, Blacklist blacklist, String outFile) throws IOException
@@ -70,42 +71,6 @@ public class Generator
 			return Collections.emptySet();
 		};
 
-		searcher = new SIFSearcher(idFetcher, new PP1(), new PP2(), new PP3(), new PP4());
-		searcher.setBlacklist(blacklist);
-		Set<SignedSIFInteraction> pp = (Set<SignedSIFInteraction>) (Set<?>) searcher.searchSIF(model);
-
-		System.out.println("Positive phospho = " + pp.size());
-
-		searcher = new SIFSearcher(idFetcher, new PN1());//, new PN2(), new PN3(), new PN4());
-		searcher.setBlacklist(blacklist);
-		Set<SignedSIFInteraction> pn = (Set<SignedSIFInteraction>) (Set<?>) searcher.searchSIF(model);
-
-		System.out.println("Negative phospho = " + pn.size());
-
-		decideConflictingPhosphorylation(pp, pn);
-
-		// prepare expression graph
-
-		searcher = new SIFSearcher(idFetcher, new EP1(), new EP2());
-		searcher.setBlacklist(blacklist);
-		Set<SIFInteraction> ep = searcher.searchSIF(model);
-
-		System.out.println("Positive expression = " + ep.size());
-
-		searcher = new SIFSearcher(idFetcher, new EN1(), new EN2());
-		searcher.setBlacklist(blacklist);
-		Set<SIFInteraction> en = searcher.searchSIF(model);
-
-		System.out.println("Negative expression " + en.size());
-
-		decideConflictingExpression(ep, en);
-
-		Set<SIFInteraction> sifs = new HashSet<SIFInteraction>();
-		sifs.addAll(pp);
-		sifs.addAll(pn);
-		sifs.addAll(ep);
-		sifs.addAll(en);
-
 		SIFToText stt = inter -> {
 			String s = inter.toString();
 			s += "\t" + inter.getMediatorsInString() + "\t";
@@ -120,6 +85,61 @@ public class Generator
 			return s;
 		};
 
+		searcher = new SIFSearcher(idFetcher, new InhibitionByBindingMiner());
+		Set<SIFInteraction> inh = searcher.searchSIF(model);
+		writeSIF(new HashSet<>(inh), stt, outFile.substring(0, outFile.lastIndexOf(".")) + "-inh.sif");
+		System.out.println("inhibitions = " + inh.size());
+
+		searcher = new SIFSearcher(idFetcher, new PP1(), new PP2(), new PP3(), new PP4());
+		searcher.setBlacklist(blacklist);
+		Set<SIFInteraction> pp = searcher.searchSIF(model);
+
+		System.out.println("pp = " + pp.size());
+
+		searcher = new SIFSearcher(idFetcher, new PN1());//, new PN2(), new PN3(), new PN4());
+		searcher.setBlacklist(blacklist);
+		Set<SIFInteraction> pn = searcher.searchSIF(model);
+
+		System.out.println("pn = " + pn.size());
+
+		// prepare expression graph
+
+		searcher = new SIFSearcher(idFetcher, new EP1(), new EP2());
+		searcher.setBlacklist(blacklist);
+		Set<SIFInteraction> ep = searcher.searchSIF(model);
+
+		System.out.println("pe = " + ep.size());
+
+		searcher = new SIFSearcher(idFetcher, new EN1(), new EN2());
+		searcher.setBlacklist(blacklist);
+		Set<SIFInteraction> en = searcher.searchSIF(model);
+
+		System.out.println("en = " + en.size());
+
+		ConflictResolver cr = new ConflictResolver(pp, pn, ep, en, inh);
+		cr.decideAndRemoveConflictingInference();
+		Set<SIFInteraction> removed = cr.getRemoved();
+		writeSIF(new HashSet<>(removed), stt, outFile.substring(0, outFile.lastIndexOf(".")) + "-removed.sif");
+		System.out.println("removed.size() = " + removed.size());
+
+		System.out.println("pp = " + pp.size());
+		System.out.println("pn = " + pn.size());
+		System.out.println("ep = " + ep.size());
+		System.out.println("en = " + en.size());
+
+		Set<SIFInteraction> sifs = new HashSet<>();
+		sifs.addAll(pp);
+		sifs.addAll(pn);
+		sifs.addAll(ep);
+		sifs.addAll(en);
+
+		writeSIF(sifs, stt, outFile);
+		kron.stop();
+		kron.print();
+	}
+
+	private static void writeSIF(Set<SIFInteraction> sifs, SIFToText stt, String outFile) throws IOException
+	{
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
 
 		for (SIFInteraction sif : sifs)
@@ -128,8 +148,6 @@ public class Generator
 		}
 
 		writer.close();
-		kron.stop();
-		kron.print();
 	}
 
 	private static void decideConflictingPhosphorylation(
@@ -308,7 +326,7 @@ public class Generator
 			}
 		}
 
-		System.out.println("rem.size() = " + rem.size());
+		System.out.println("removed controls size = " + rem.size());
 		for (Entity entity : rem)
 		{
 			model.remove(entity);

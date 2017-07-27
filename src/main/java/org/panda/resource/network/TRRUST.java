@@ -53,7 +53,7 @@ public class TRRUST extends FileServer
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{"http://www.grnpedia.org/trrust/trrust_rawdata.txt"};
+		return new String[]{"http://www.grnpedia.org/trrust/data/trrust_rawdata.human.tsv"};
 	}
 
 	@Override

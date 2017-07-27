@@ -262,7 +262,7 @@ public class PhosphoSitePlus extends FileServer
 //		{
 //			printSites(list.get(i));
 //		}
-		psp.printSites("SPRY2");
+		psp.printSites("ESR1");
 //		printUniqueAA();
 
 //		List<Integer> dists = new ArrayList<>();
