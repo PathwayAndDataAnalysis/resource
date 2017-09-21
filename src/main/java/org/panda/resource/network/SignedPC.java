@@ -2,6 +2,7 @@ package org.panda.resource.network;
 
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.panda.resource.ResourceDirectory;
+import org.panda.resource.SignedInteractionText;
 import org.panda.resource.signednetwork.SignedType;
 import org.panda.utility.CollectionUtil;
 import org.panda.utility.graph.DirectedGraph;
@@ -91,9 +92,12 @@ public class SignedPC extends PathwayCommons
 	@Override
 	public boolean processTheDownloadedFiles()
 	{try{
-		Map<String, Writer> writers = new HashMap<>();
+
+		Map<String, Map<String, SignedInteractionText>> mapmap = new HashMap<>();
+
 		Files.createDirectories(Paths.get(getPrivateDirectory()));
 
+		// interaction key to sites
 		Map<String, Set<String>> falseMap = new HashMap<>();
 
 		for (String localFilename : getLocalFilenames())
@@ -106,13 +110,9 @@ public class SignedPC extends PathwayCommons
 				{
 					String line = sc.nextLine();
 					if (line.startsWith("#") || line.isEmpty()) continue;
-					String[] token = line.split("\t");
-					if (token.length == 3) falseMap.put(line, Collections.emptySet());
-					else
-					{
-						falseMap.put(token[0] + "\t" + token[1] + "\t" + token[2],
-							new HashSet<>(Arrays.asList(token[3].split(";"))));
-					}
+
+					SignedInteractionText sit = new SignedInteractionText(line);
+					falseMap.put(sit.key(), sit.getSites() == null ? Collections.emptySet() : sit.getSites());
 				}
 			}
 			else
@@ -120,47 +120,48 @@ public class SignedPC extends PathwayCommons
 				while (sc.hasNextLine())
 				{
 					String line = sc.nextLine();
-					String[] token = line.split("\t");
+					if (line.isEmpty() || line.startsWith("#")) continue;
 
-					if (token.length > 2)
+					SignedInteractionText sit = new SignedInteractionText(line);
+
+					// Do not consider the relation if it is in the false set
+					Set<String> falseSites = falseMap.get(sit.key());
+					if (falseSites != null)
 					{
-						// Do not consider the relation if it is in the false set
-						String key = token[0] + "\t" + token[1] + "\t" + token[2];
-						Set<String> falseSites = falseMap.get(key);
-						Set<String> sites = null;
-						if (falseSites != null)
-						{
-							if (falseSites.isEmpty()) continue;
-							if (token.length <= 4) continue;
-							sites = new HashSet<>(Arrays.asList(token[4].split(";")));
-							sites.removeAll(falseSites);
-							if (sites.isEmpty()) continue;
-						}
+						if (falseSites.isEmpty()) continue;
+						if (sit.getSites() == null || sit.getSites().isEmpty()) continue;
 
-						if (!writers.containsKey(token[1])) writers.put(token[1],
-							new BufferedWriter(new FileWriter(getPrivateDirectory() + token[1] + ".txt")));
+						sit.getSites().removeAll(falseSites);
+						if (sit.getSites().isEmpty()) continue;
+					}
 
-						writers.get(token[1]).write(token[0] + "\t" + token[2]);
+					if (!mapmap.containsKey(sit.getType().getTag()))
+					{
+						mapmap.put(sit.getType().getTag(), new HashMap<>());
+					}
 
-						if (token.length > 3)
-						{
-							writers.get(token[1]).write("\t" + token[3]);
-						}
-						if (token.length > 4)
-						{
-							if (falseMap.containsKey(key))
-								writers.get(token[1]).write("\t" + CollectionUtil.merge(sites, ";"));
-							else writers.get(token[1]).write("\t" + token[4]);
-						}
-
-						writers.get(token[1]).write("\n");
+					if (mapmap.get(sit.getType().getTag()).containsKey(sit.key()))
+					{
+						mapmap.get(sit.getType().getTag()).get(sit.key()).merge(sit);
+					}
+					else
+					{
+						mapmap.get(sit.getType().getTag()).put(sit.key(), sit);
 					}
 				}
 			}
 		}
 
-		for (Writer writer : writers.values())
+		for (String type : mapmap.keySet())
 		{
+			BufferedWriter writer = new BufferedWriter(new FileWriter(getPrivateDirectory() + type + ".txt"));
+
+			for (String key : mapmap.get(type).keySet())
+			{
+				SignedInteractionText sit = mapmap.get(type).get(key);
+				writer.write(sit.toStringWOType() + "\n");
+			}
+
 			writer.close();
 		}
 

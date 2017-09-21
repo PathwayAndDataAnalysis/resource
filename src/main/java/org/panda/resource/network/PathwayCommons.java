@@ -182,7 +182,7 @@ public class PathwayCommons extends FileServer
 	@Override
 	public String[] getDistantURLs() { try
 	{
-		String base = "http://www.pathwaycommons.org/archives/PC2/current/";
+		String base = "http://www.pathwaycommons.org/archives/PC2/v8/";
 		String partial = "All.EXTENDED_BINARY_SIF.hgnc.txt.gz";
 
 		Scanner sc = new Scanner(new URL(base).openStream());

@@ -13,6 +13,7 @@ import org.biopax.paxtools.pattern.miner.SIFSearcher;
 import org.biopax.paxtools.pattern.miner.SIFToText;
 import org.biopax.paxtools.pattern.util.Blacklist;
 import org.panda.utility.Kronometre;
+import org.panda.utility.TermCounter;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
@@ -27,12 +28,13 @@ import java.util.*;
  */
 public class Generator
 {
+	static TermCounter tc = new TermCounter();
 	public static void main(String[] args) throws IOException
 	{
 		String dir = "/home/babur/Documents/PC/";
 //		String dir = "/media/babur/6TB1/REACH-cards/";
 		SimpleIOHandler h = new SimpleIOHandler(BioPAXLevel.L3);
-		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons.8.Detailed.BIOPAX.owl"));
+		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons9.All.BIOPAX.owl"));
 //		Model model = h.convertFromOWL(new FileInputStream(dir + "temp.owl"));
 //		Model model = h.convertFromOWL(new FileInputStream(dir + "REACH.owl"));
 		removeTRANSFAC(model);
@@ -43,8 +45,9 @@ public class Generator
 		Blacklist blacklist = new Blacklist(dir + "blacklist.txt");
 //		Blacklist blacklist = null;
 
-		generate(model, blacklist, dir + "SignedREACH-woTF2.sif");
+		generate(model, blacklist, dir + "SignedPC-woTF.sif");
 //		generate(model, null, dir + "temp.sif");
+		tc.print();
 	}
 
 	public static void generate(Model model, Blacklist blacklist, String outFile) throws IOException
@@ -85,10 +88,10 @@ public class Generator
 			return s;
 		};
 
-		searcher = new SIFSearcher(idFetcher, new InhibitionByBindingMiner());
-		Set<SIFInteraction> inh = searcher.searchSIF(model);
-		writeSIF(new HashSet<>(inh), stt, outFile.substring(0, outFile.lastIndexOf(".")) + "-inh.sif");
-		System.out.println("inhibitions = " + inh.size());
+//		searcher = new SIFSearcher(idFetcher, new InhibitionByBindingMiner());
+//		Set<SIFInteraction> inh = searcher.searchSIF(model);
+//		writeSIF(new HashSet<>(inh), stt, outFile.substring(0, outFile.lastIndexOf(".")) + "-inh.sif");
+//		System.out.println("inhibitions = " + inh.size());
 
 		searcher = new SIFSearcher(idFetcher, new PP1(), new PP2(), new PP3(), new PP4());
 		searcher.setBlacklist(blacklist);
@@ -96,7 +99,7 @@ public class Generator
 
 		System.out.println("pp = " + pp.size());
 
-		searcher = new SIFSearcher(idFetcher, new PN1());//, new PN2(), new PN3(), new PN4());
+		searcher = new SIFSearcher(idFetcher, new PN1(), new PN2(), new PN3(), new PN4());
 		searcher.setBlacklist(blacklist);
 		Set<SIFInteraction> pn = searcher.searchSIF(model);
 
@@ -116,11 +119,11 @@ public class Generator
 
 		System.out.println("en = " + en.size());
 
-		ConflictResolver cr = new ConflictResolver(pp, pn, ep, en, inh);
-		cr.decideAndRemoveConflictingInference();
-		Set<SIFInteraction> removed = cr.getRemoved();
-		writeSIF(new HashSet<>(removed), stt, outFile.substring(0, outFile.lastIndexOf(".")) + "-removed.sif");
-		System.out.println("removed.size() = " + removed.size());
+//		ConflictResolver cr = new ConflictResolver(pp, pn, ep, en, inh);
+//		cr.decideAndRemoveConflictingInference();
+//		Set<SIFInteraction> removed = cr.getRemoved();
+//		writeSIF(new HashSet<>(removed), stt, outFile.substring(0, outFile.lastIndexOf(".")) + "-removed.sif");
+//		System.out.println("removed.size() = " + removed.size());
 
 		System.out.println("pp = " + pp.size());
 		System.out.println("pn = " + pn.size());
@@ -312,13 +315,14 @@ public class Generator
 		for (Control control : model.getObjects(Control.class))
 		{
 			Set dsNames = pa.getValueFromBean(control);
-			if (dsNames.contains("TRANSFAC") || dsNames.contains("CTD"))
+			dsNames.forEach(o -> tc.addTerm((String) o));
+			if (dsNames.contains("MSigDB") || dsNames.contains("CTD"))
 			{
-				for (Controller controller : control.getController())
+				for (Controller controller : new HashSet<>(control.getController()))
 				{
 					control.removeController(controller);
 				}
-				for (Process process : control.getControlled())
+				for (Process process : new HashSet<>(control.getControlled()))
 				{
 					control.removeControlled(process);
 				}

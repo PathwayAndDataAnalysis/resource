@@ -1,6 +1,6 @@
 package org.panda.resource.tcga;
 
-import org.panda.resource.PhosphoSitePlus;
+import org.panda.resource.siteeffect.PhosphoSitePlus;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

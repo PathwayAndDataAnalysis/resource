@@ -24,6 +24,7 @@ public class TFactS extends FileServer
 
 	private DirectedGraph positive;
 	private DirectedGraph negative;
+	private DirectedGraph unsigned;
 
 	public static TFactS get()
 	{
@@ -41,6 +42,11 @@ public class TFactS extends FileServer
 		return negative;
 	}
 
+	public DirectedGraph getUnsignedGraph()
+	{
+		return unsigned;
+	}
+
 	@Override
 	public String[] getLocalFilenames()
 	{
@@ -52,6 +58,7 @@ public class TFactS extends FileServer
 	{
 		positive = new DirectedGraph("TFactS positive", SignedType.UPREGULATES_EXPRESSION.getTag());
 		negative = new DirectedGraph("TFactS negative", SignedType.DOWNREGULATES_EXPRESSION.getTag());
+		unsigned = new DirectedGraph("TFactS all", SIFEnum.CONTROLS_EXPRESSION_OF.getTag());
 
 		Scanner scanner = new Scanner(new File(locateInBase(getLocalFilenames()[0])));
 		while (scanner.hasNextLine())
@@ -77,6 +84,8 @@ public class TFactS extends FileServer
 					System.err.println("Irregular sign: " + token[2]);
 					break;
 			}
+
+			unsigned.putRelation(token[0], token[1]);
 		}
 
 		return true;

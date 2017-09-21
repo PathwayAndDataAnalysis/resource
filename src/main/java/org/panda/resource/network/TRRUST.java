@@ -29,7 +29,7 @@ public class TRRUST extends FileServer
 		return instance;
 	}
 
-	public Graph getUnsignedGraph()
+	public DirectedGraph getUnsignedGraph()
 	{
 		return unsigned;
 	}

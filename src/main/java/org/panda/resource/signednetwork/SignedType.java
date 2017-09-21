@@ -21,6 +21,11 @@ public enum SignedType implements SIFType
 		true, false),
 	DOWNREGULATES_EXPRESSION("First protein negatively affects expression of the second protein.",
 		true, false),
+	RELEASES_GDP("First protein detaches a GDP from a GTPase, so that GTPase can bind to a GTP and gets activated.",
+		true, false),
+	HYDROLIZES_GTP("First protein activates GTPase function of a GTP-bound GTPase, so that the GTPase becomes " +
+		"GDP-bound and gets inactivated.",
+		true, false),
 	;
 
 	/**

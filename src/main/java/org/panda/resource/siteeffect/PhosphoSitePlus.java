@@ -1,10 +1,8 @@
-package org.panda.resource;
+package org.panda.resource.siteeffect;
 
-import org.panda.resource.tcga.ProteomicsFileRow;
-import org.panda.utility.TermCounter;
+import org.panda.resource.HGNC;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -14,11 +12,10 @@ import java.util.*;
  *
  * @author Ozgun Babur
  */
-public class PhosphoSitePlus extends FileServer
+public class PhosphoSitePlus extends SiteEffectServer
 {
 	private static PhosphoSitePlus instance;
 
-	Map<String, Map<String, Integer>> typeMap;
 	Map<String, Map<String, String>> actualMap;
 
 	public static synchronized PhosphoSitePlus get()
@@ -33,70 +30,7 @@ public class PhosphoSitePlus extends FileServer
 		return new String[]{"Regulatory_sites", "manually-curated-sites.txt"};
 	}
 
-	public Integer getEffect(String gene, String site)
-	{
-		if (typeMap.containsKey(gene))
-		{
-			return typeMap.get(gene).get(site);
-		}
-		return null;
-	}
-
-	public Integer getClosestEffect(String gene, String site, int distanceThreshold)
-	{
-		if (typeMap.containsKey(gene))
-		{
-			int s0 = Integer.parseInt(site.substring(1));
-
-			Integer effect = null;
-			int closestDist = Integer.MAX_VALUE;
-
-			for (String ss : typeMap.get(gene).keySet())
-			{
-				Integer eff = typeMap.get(gene).get(ss);
-
-				int s1 = Integer.parseInt(ss.substring(1));
-
-				int dist = Math.abs(s0 - s1);
-				if (dist == closestDist && !eff.equals(effect))
-				{
-					effect = 0;
-				}
-				else if (dist < closestDist)
-				{
-					effect = eff;
-					closestDist = dist;
-				}
-			}
-			if (closestDist <= distanceThreshold) return effect;
-		}
-		return null;
-	}
-
-	private List<String> sortSites(Set<String> sites)
-	{
-		List<String> list = new ArrayList<>(sites);
-		Collections.sort(list, (o1, o2) -> {
-			try
-			{
-				return new Integer(o1.substring(1)).compareTo(new Integer(o2.substring(1)));
-			}
-			catch (NumberFormatException e)
-			{
-				return 0;
-			}
-		});
-		return list;
-	}
-
-	private List<String> getGenesWithMostSites()
-	{
-		List<String> genes = new ArrayList<>(typeMap.keySet());
-		Collections.sort(genes, (o1, o2) -> new Integer(typeMap.get(o2).size()).compareTo(typeMap.get(o1).size()));
-		return genes;
-	}
-
-	private void printSites(String gene)
+	protected void printSites(String gene)
 	{
 		System.out.println("Gene: " + gene);
 		if (typeMap.containsKey(gene))
@@ -107,6 +41,10 @@ public class PhosphoSitePlus extends FileServer
 				System.out.print("\tsite: " + site + "\t" + (sign == 1 ? "activating" : sign == -1 ? "inhibiting" : "complex"));
 				System.out.println("\t(" + actualMap.get(gene).get(site) + ")");
 			}
+		}
+		else
+		{
+			System.out.println("Not found.");
 		}
 	}
 
@@ -131,7 +69,7 @@ public class PhosphoSitePlus extends FileServer
 			actualMap.get(gene).put(site, "manual curation");
 		});
 
-		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0])), Charset.forName("windows-31j")).skip(4)
+		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0]))/*, Charset.forName("windows-31j")*/).skip(4)
 			.map(line -> line.split("\t"))
 			.filter(token -> token.length >= 13 && token[6].equals("human") &&
 				token[8].equals("PHOSPHORYLATION") && HGNC.get().getSymbol(token[4]) != null)
@@ -184,76 +122,6 @@ public class PhosphoSitePlus extends FileServer
 		return true;
 	}
 
-	void printUniqueAA()
-	{
-		Set<String> sites = new HashSet<>();
-		for (String gene : typeMap.keySet())
-		{
-			sites.addAll(typeMap.get(gene).keySet());
-		}
-		TermCounter tc = new TermCounter();
-		for (String site : sites)
-		{
-			tc.addTerm(site.substring(0, 1));
-		}
-		tc.print();
-	}
-
-	public void fillInMissingEffect(Collection<ProteomicsFileRow> datas, int proximityThreshold)
-	{
-		for (ProteomicsFileRow data : datas)
-		{
-			if (data.effect != null) continue;
-			if (data.sites == null || data.sites.isEmpty()) continue;
-
-			Set<Integer> found = getEffects(data, proximityThreshold);
-			data.effect = aggregateEffects(found);
-		}
-	}
-
-	public Set<Integer> getEffects(ProteomicsFileRow data, int proximityThreshold)
-	{
-		Set<Integer> found = new HashSet<>();
-
-		for (String gene : data.sites.keySet())
-		{
-			for (String site : data.sites.get(gene))
-			{
-				Integer e = getEffect(gene, site);
-				if (e != null) found.add(e);
-			}
-		}
-
-		if (found.isEmpty() && proximityThreshold > 0)
-		{
-			for (String gene : data.sites.keySet())
-			{
-				for (String site : data.sites.get(gene))
-				{
-					Integer e = getClosestEffect(gene, site, proximityThreshold);
-					if (e != null) found.add(e);
-				}
-			}
-		}
-
-		return found;
-	}
-
-	private ProteomicsFileRow.SiteEffect aggregateEffects(Set<Integer> found)
-	{
-		if (found.contains(1))
-		{
-			if (found.contains(-1)) return ProteomicsFileRow.SiteEffect.COMPLEX;
-			else return ProteomicsFileRow.SiteEffect.ACTIVATING;
-		}
-		else if (found.contains(-1))
-		{
-			return ProteomicsFileRow.SiteEffect.INHIBITING;
-		}
-		else if (!found.isEmpty()) return ProteomicsFileRow.SiteEffect.COMPLEX;
-		return null;
-	}
-
 	public static void main(String[] args)
 	{
 		PhosphoSitePlus psp = new PhosphoSitePlus();
@@ -262,7 +130,7 @@ public class PhosphoSitePlus extends FileServer
 //		{
 //			printSites(list.get(i));
 //		}
-		psp.printSites("ESR1");
+		psp.printSites("SOS1");
 //		printUniqueAA();
 
 //		List<Integer> dists = new ArrayList<>();
