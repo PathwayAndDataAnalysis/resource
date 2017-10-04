@@ -2,7 +2,6 @@ package org.panda.resource.signednetwork;
 
 import org.biopax.paxtools.controller.PathAccessor;
 import org.biopax.paxtools.io.SimpleIOHandler;
-import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
@@ -37,7 +36,7 @@ public class Generator
 		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons9.All.BIOPAX.owl"));
 //		Model model = h.convertFromOWL(new FileInputStream(dir + "temp.owl"));
 //		Model model = h.convertFromOWL(new FileInputStream(dir + "REACH.owl"));
-		removeTRANSFAC(model);
+		removeCTDAndTransfac(model);
 		System.out.println("Model size = " + model.getObjects().size());
 //		BlacklistGenerator gen = new BlacklistGenerator();
 //		Blacklist blacklist = gen.generateBlacklist(model);
@@ -45,12 +44,12 @@ public class Generator
 		Blacklist blacklist = new Blacklist(dir + "blacklist.txt");
 //		Blacklist blacklist = null;
 
-		generate(model, blacklist, dir + "SignedPC-woTF.sif");
+		generate(model, blacklist, dir + "SignedPC");
 //		generate(model, null, dir + "temp.sif");
 		tc.print();
 	}
 
-	public static void generate(Model model, Blacklist blacklist, String outFile) throws IOException
+	public static void generate(Model model, Blacklist blacklist, String outFileWoExt) throws IOException
 	{
 		Kronometre kron = new Kronometre();
 
@@ -136,7 +135,12 @@ public class Generator
 		sifs.addAll(ep);
 		sifs.addAll(en);
 
-		writeSIF(sifs, stt, outFile);
+		String dirtyFile = outFileWoExt + "-dirty.sif";
+		writeSIF(sifs, stt, dirtyFile);
+
+		ConflictResolverSimple crs = new ConflictResolverSimple();
+		crs.decideAndRemoveConflictingInference(dirtyFile, outFileWoExt + ".sif", outFileWoExt + "-removed.sif");
+
 		kron.stop();
 		kron.print();
 	}
@@ -307,7 +311,7 @@ public class Generator
 		return set;
 	}
 
-	private static void removeTRANSFAC(Model model)
+	private static void removeCTDAndTransfac(Model model)
 	{
 		PathAccessor pa = new PathAccessor("Control/dataSource/name");
 		Set<Control> rem = new HashSet<>();

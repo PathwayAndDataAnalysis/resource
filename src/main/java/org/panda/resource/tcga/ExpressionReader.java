@@ -14,11 +14,11 @@ import java.util.*;
  */
 public class ExpressionReader
 {
-	private String filename;
+	protected String filename;
 
-	private Map<String, Map<String, Double>> data;
+	protected Map<String, Map<String, Double>> data;
 
-	private double LOG2 = Math.log(2);
+	protected double LOG2 = Math.log(2);
 
 	public ExpressionReader(String filename) throws FileNotFoundException
 	{
@@ -32,7 +32,7 @@ public class ExpressionReader
 		load(genes);
 	}
 
-	private void load(Set<String> genes) throws FileNotFoundException
+	protected void load(Set<String> genes) throws FileNotFoundException
 	{
 		Scanner sc = new Scanner(new File(filename));
 		String line = sc.nextLine();

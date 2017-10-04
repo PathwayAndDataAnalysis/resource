@@ -182,8 +182,8 @@ public class PathwayCommons extends FileServer
 	@Override
 	public String[] getDistantURLs() { try
 	{
-		String base = "http://www.pathwaycommons.org/archives/PC2/v8/";
-		String partial = "All.EXTENDED_BINARY_SIF.hgnc.txt.gz";
+		String base = "http://www.pathwaycommons.org/archives/PC2/v9/";
+		String partial = "All.hgnc.txt.gz";
 
 		Scanner sc = new Scanner(new URL(base).openStream());
 		while (sc.hasNextLine())
@@ -194,7 +194,7 @@ public class PathwayCommons extends FileServer
 				return new String[]{base + filename};
 			}
 		}
-		throw new RuntimeException("Cannot find the current PC All.EXTENDED_BINARY_SIF.hgnc.txt.gz file in " + base);
+		throw new RuntimeException("Cannot find the current PC " + partial + " file in " + base);
 	}
 	catch (Exception e){throw new RuntimeException(e);}}
 

@@ -79,7 +79,7 @@ public class ConflictResolverSimple
 	{
 		ConflictResolverSimple crs = new ConflictResolverSimple();
 		String dir = "/home/babur/Documents/PC/";
-		crs.decideAndRemoveConflictingInference(dir + "SignedPC-woTF-dirty.sif", dir + "SignedPC-woTF.sif",
-			dir + "SignedPC-woTF-removed.sif");
+		crs.decideAndRemoveConflictingInference(dir + "SignedPC-dirty.sif", dir + "SignedPC.sif",
+			dir + "SignedPC-removed.sif");
 	}
 }
