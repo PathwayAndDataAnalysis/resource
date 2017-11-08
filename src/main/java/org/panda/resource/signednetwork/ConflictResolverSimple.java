@@ -36,6 +36,12 @@ public class ConflictResolverSimple
 		Map<String, SignedInteractionText> enMap = ints.stream().filter(i -> i.getType() == SignedType.DOWNREGULATES_EXPRESSION)
 			.collect(Collectors.toMap(SignedInteractionText::signlessKey, i -> i));
 
+		Map<String, SignedInteractionText> gpMap = ints.stream().filter(i -> i.getType() == SignedType.ACTIVATES_GTPASE)
+			.collect(Collectors.toMap(SignedInteractionText::signlessKey, i -> i));
+
+		Map<String, SignedInteractionText> gnMap = ints.stream().filter(i -> i.getType() == SignedType.INHIBITS_GTPASE)
+			.collect(Collectors.toMap(SignedInteractionText::signlessKey, i -> i));
+
 		// map paired negative-positive relations to each other
 
 		Map<SignedInteractionText, SignedInteractionText> pMap = pnMap.keySet().stream().filter(ppMap::containsKey)
@@ -44,9 +50,13 @@ public class ConflictResolverSimple
 		Map<SignedInteractionText, SignedInteractionText> eMap = enMap.keySet().stream().filter(epMap::containsKey)
 			.collect(Collectors.toMap(enMap::get, epMap::get));
 
+		Map<SignedInteractionText, SignedInteractionText> gMap = gnMap.keySet().stream().filter(gpMap::containsKey)
+			.collect(Collectors.toMap(gnMap::get, gpMap::get));
+
 		Set<SignedInteractionText> remove = new HashSet<>();
 		processAndSeparate(pMap, remove);
 		processAndSeparate(eMap, remove);
+		processAndSeparate(gMap, remove);
 
 		ints.removeAll(remove);
 

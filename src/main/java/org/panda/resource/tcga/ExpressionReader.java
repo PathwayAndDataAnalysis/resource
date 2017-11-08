@@ -88,6 +88,11 @@ public class ExpressionReader
 		return data.keySet();
 	}
 
+	public boolean hasGene(String gene)
+	{
+		return data.containsKey(gene);
+	}
+
 	public double[] getGeneAlterationArray(String id, String[] samples)
 	{
 		if (data.containsKey(id))

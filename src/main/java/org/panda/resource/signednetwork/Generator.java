@@ -55,8 +55,6 @@ public class Generator
 
 		SIFSearcher searcher;
 
-		// prepare phospho-graph
-
 		IDFetcher idFetcher = ele ->
 		{
 			if (ele instanceof XReferrable)
@@ -92,6 +90,8 @@ public class Generator
 //		writeSIF(new HashSet<>(inh), stt, outFile.substring(0, outFile.lastIndexOf(".")) + "-inh.sif");
 //		System.out.println("inhibitions = " + inh.size());
 
+		// prepare phospho-graph
+
 		searcher = new SIFSearcher(idFetcher, new PP1(), new PP2(), new PP3(), new PP4());
 		searcher.setBlacklist(blacklist);
 		Set<SIFInteraction> pp = searcher.searchSIF(model);
@@ -118,22 +118,31 @@ public class Generator
 
 		System.out.println("en = " + en.size());
 
+		// prepare GTPase graph
+
+		searcher = new SIFSearcher(idFetcher, new GP1());
+		Set<SIFInteraction> gp = searcher.searchSIF(model);
+
+		System.out.println("gp = " + gp.size());
+
+		searcher = new SIFSearcher(idFetcher, new GN1());
+		Set<SIFInteraction> gn = searcher.searchSIF(model);
+
+		System.out.println("gn = " + gn.size());
+
 //		ConflictResolver cr = new ConflictResolver(pp, pn, ep, en, inh);
 //		cr.decideAndRemoveConflictingInference();
 //		Set<SIFInteraction> removed = cr.getRemoved();
 //		writeSIF(new HashSet<>(removed), stt, outFile.substring(0, outFile.lastIndexOf(".")) + "-removed.sif");
 //		System.out.println("removed.size() = " + removed.size());
 
-		System.out.println("pp = " + pp.size());
-		System.out.println("pn = " + pn.size());
-		System.out.println("ep = " + ep.size());
-		System.out.println("en = " + en.size());
-
 		Set<SIFInteraction> sifs = new HashSet<>();
 		sifs.addAll(pp);
 		sifs.addAll(pn);
 		sifs.addAll(ep);
 		sifs.addAll(en);
+		sifs.addAll(gp);
+		sifs.addAll(gn);
 
 		String dirtyFile = outFileWoExt + "-dirty.sif";
 		writeSIF(sifs, stt, dirtyFile);
