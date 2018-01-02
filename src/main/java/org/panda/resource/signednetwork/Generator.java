@@ -33,9 +33,9 @@ public class Generator
 		String dir = "/home/babur/Documents/PC/";
 //		String dir = "/media/babur/6TB1/REACH-cards/";
 		SimpleIOHandler h = new SimpleIOHandler(BioPAXLevel.L3);
-		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons9.All.BIOPAX.owl"));
+//		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons9.All.BIOPAX.owl"));
 //		Model model = h.convertFromOWL(new FileInputStream(dir + "temp.owl"));
-//		Model model = h.convertFromOWL(new FileInputStream(dir + "REACH.owl"));
+		Model model = h.convertFromOWL(new FileInputStream(dir + "PathwayCommons9.psp.BIOPAX.owl"));
 		removeCTDAndTransfac(model);
 		System.out.println("Model size = " + model.getObjects().size());
 //		BlacklistGenerator gen = new BlacklistGenerator();
@@ -44,8 +44,8 @@ public class Generator
 		Blacklist blacklist = new Blacklist(dir + "blacklist.txt");
 //		Blacklist blacklist = null;
 
-		generate(model, blacklist, dir + "SignedPC");
-//		generate(model, null, dir + "temp.sif");
+//		generate(model, blacklist, dir + "SignedPC");
+		generate(model, null, dir + "psp");
 		tc.print();
 	}
 

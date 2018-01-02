@@ -1,17 +1,14 @@
 package org.panda.resource;
 
+import org.panda.utility.ArrayUtil;
+
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * Provides genes in OncoKB.
- *
- * How to update this resource:
- * Go to oncokb.org and click on the "genes" link. All genes should come in one page. Copy everything and paste into
- * a text-only editor. Delete unnecessary portion.
  *
  * @author Ozgun Babur
  */
@@ -19,7 +16,7 @@ public class OncoKB extends FileServer
 {
 	private static OncoKB instance;
 
-	private Map<String, String> sym2level;
+	private Map<String, Map<String, String[]>> data;
 
 	public static synchronized OncoKB get()
 	{
@@ -29,38 +26,78 @@ public class OncoKB extends FileServer
 
 	public Set<String> getAllSymbols()
 	{
-		return sym2level.keySet();
+		return data.keySet();
 	}
 
 	public boolean isCancerGene(String sym)
 	{
-		return sym2level.containsKey(sym);
-	}
-
-	public String getLevel(String gene)
-	{
-		return sym2level.get(gene);
+		return data.containsKey(sym);
 	}
 
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{"oncokb.txt"};
+		return new String[]{"oncoKB.txt"};
+	}
+
+	@Override
+	public String[] getDistantURLs()
+	{
+		return new String[]{"http://oncokb.org/api/v1/utils/allAnnotatedVariants.txt"};
 	}
 
 	@Override
 	public boolean load() throws IOException
 	{
-		sym2level = new HashMap<>();
+		data = new HashMap<>();
 
 		getResourceAsStream(getLocalFilenames()[0]).skip(1).map(l -> l.split("\t")).forEach(t ->
-				sym2level.put(t[0], t[1]));
+		{
+			if (!data.containsKey(t[0])) data.put(t[0], new HashMap<>());
+
+			data.get(t[0]).put(t[1], ArrayUtil.getTail(t, 2));
+		});
 
 		return true;
 	}
 
-	public static void main(String[] args)
+	public void printMatchReport(Map<String, Set<String>> muts)
 	{
-		System.out.println(get().isCancerGene("AR"));
+		muts.keySet().stream().sorted().forEach(gene ->
+		{
+			if (data.containsKey(gene))
+			{
+				for (String mut : muts.get(gene))
+				{
+					if (data.get(gene).containsKey(mut))
+					{
+						System.out.println(gene + "\t" + mut + "\t" +  Arrays.toString(data.get(gene).get(mut)));
+					}
+					else if ((mut.endsWith("*") || mut.contains("fs")) &&
+						data.get(gene).containsKey("Truncating Mutations"))
+					{
+						System.out.println(gene + "\t" + mut + " (trunc)"  + "\t" +  Arrays.toString(data.get(gene).get("Truncating Mutations")));
+					}
+					else
+					{
+						System.out.println(gene + "\t" + mut);
+					}
+				}
+			}
+		});
+	}
+
+	public static void main(String[] args) throws IOException
+	{
+		Map<String, Set<String>> map = new HashMap<>();
+
+		Files.lines(Paths.get("/home/babur/Documents/Analyses/SMMART/Patient1-revisit/data/met1-muts.maf"))
+			.map(l -> l.split("\t")).filter(t -> t.length > 41).filter(t -> !t[41].isEmpty()).forEach(t ->
+		{
+			if (!map.containsKey(t[0])) map.put(t[0], new HashSet<>());
+			map.get(t[0]).add(t[41].substring(2));
+		});
+
+		get().printMatchReport(map);
 	}
 }

@@ -57,6 +57,9 @@ public class Download
 		{
 			URL url = new URL(address);
 			URLConnection con = url.openConnection();
+			con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 " +
+				"(KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+			con.connect();
 
 			InputStream in = con.getInputStream();
 
@@ -236,5 +239,11 @@ public class Download
 			if (files[i].contains(" ")) files[i] = files[i].substring(files[i].indexOf(" ") + 1);
 		}
 		return files;
+	}
+
+	public static void main(String[] args)
+	{
+		downloadAsIs("https://www.genenames.org/cgi-bin/download?col=gd_hgnc_id&col=gd_app_sym&col=gd_prev_sym&col=gd_aliases&col=gd_pub_chrom_map&col=family.name&col=md_prot_id&status=Approved&status_opt=2&where=&order_by=gd_app_sym_sort&format=text&limit=&hgnc_dbtag=on&submit=submit",
+			"temp.txt");
 	}
 }
