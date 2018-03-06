@@ -23,6 +23,8 @@ public class CNAReader
 
 	int threshold;
 
+	int idLength;
+
 	public static final int NO_DATA = -Integer.MAX_VALUE;
 
 	public CNAReader(String filename) throws FileNotFoundException
@@ -42,6 +44,11 @@ public class CNAReader
 
 	public CNAReader(String filename, Set<String> genes, boolean reduce, int threshold) throws FileNotFoundException
 	{
+		this(filename, genes, reduce, threshold, 12);
+	}
+
+	public CNAReader(String filename, Set<String> genes, boolean reduce, int threshold, int idLength) throws FileNotFoundException
+	{
 		this.filename = filename;
 		this.reduce = reduce;
 
@@ -49,7 +56,8 @@ public class CNAReader
 			throw new IllegalArgumentException("Threshold has to be positive integer");
 
 		this.threshold = threshold;
-		this.data = new HashMap<String, Map<String, Integer>>();
+		this.data = new HashMap<>();
+		this.idLength = idLength;
 		load(genes);
 	}
 
@@ -66,7 +74,7 @@ public class CNAReader
 
 		for (int i = ss; i < header.length; i++)
 		{
-			header[i] = header[i].substring(0, 12);
+			if (header[i].length() > idLength) header[i] = header[i].substring(0, idLength);
 		}
 
 		while (sc.hasNextLine())

@@ -23,17 +23,20 @@ public class RPPAReader
 
 	private Map<String, ProteomicsFileRow> idToData;
 
+	private int idLength;
+
 	public RPPAReader(String filename) throws FileNotFoundException
 	{
-		this(filename, null);
+		this(filename, null, 12);
 	}
 
-	public RPPAReader(String filename, Set<String> genes) throws FileNotFoundException
+	public RPPAReader(String filename, Set<String> genes, int idLength) throws FileNotFoundException
 	{
 		this.filename = filename;
 		this.data = new HashMap<>();
 		this.symbolToIDs = new HashMap<>();
 		this.idToData = new HashMap<>();
+		this.idLength = idLength;
 		load(genes);
 	}
 
@@ -50,7 +53,7 @@ public class RPPAReader
 
 		for (int i = ss; i < header.length; i++)
 		{
-			header[i] = header[i].substring(0, 15);
+			header[i] = header[i].substring(0, idLength);
 		}
 
 		while (sc.hasNextLine())

@@ -19,6 +19,8 @@ public class MutationReader
 
 	private Set<String> sampleSet;
 
+	int idLength;
+
 	public MutationReader(String filename) throws IOException
 	{
 		this(filename, null);
@@ -26,9 +28,17 @@ public class MutationReader
 
 	public MutationReader(String filename, String... mutTypes) throws IOException
 	{
+		this(filename, 12, mutTypes);
+	}
+
+	public MutationReader(String filename, int idLength, String... mutTypes) throws IOException
+	{
 		this.mutMap = new LinkedHashMap<>();
 		this.sampleSet = new HashSet<>();
-		if (filename != null) load(filename, mutTypes == null || mutTypes.length == 0 ? null : new HashSet<>(Arrays.asList(mutTypes)));
+		this.idLength = idLength;
+		if (filename != null) load(filename,
+			mutTypes == null || mutTypes.length == 0 || (mutTypes.length == 1 && mutTypes[0] == null) ? null :
+				new HashSet<>(Arrays.asList(mutTypes)));
 	}
 
 	public void load(String filename, Set<String> mutTypes) throws IOException
@@ -73,7 +83,7 @@ public class MutationReader
 		{
 			String id = token[0];
 			String sample = token[sampleInd];
-			sample = sample.substring(0, 12);
+			if (sample.length() > idLength) sample = sample.substring(0, idLength);
 			sampleSet.add(sample);
 
 			String type = token[typeInd];

@@ -20,6 +20,8 @@ public class ExpressionReader
 
 	protected double LOG2 = Math.log(2);
 
+	protected int idLength;
+
 	public ExpressionReader(String filename) throws FileNotFoundException
 	{
 		this (filename, null);
@@ -27,8 +29,14 @@ public class ExpressionReader
 
 	public ExpressionReader(String filename, Set<String> genes) throws FileNotFoundException
 	{
+		this(filename, genes, 12);
+	}
+
+	public ExpressionReader(String filename, Set<String> genes, int idLength) throws FileNotFoundException
+	{
 		this.filename = filename;
 		this.data = new HashMap<>();
+		this.idLength = idLength;
 		load(genes);
 	}
 
@@ -45,7 +53,7 @@ public class ExpressionReader
 
 		for (int i = ss; i < header.length; i++)
 		{
-			header[i] = header[i].substring(0, 12);
+			if (header[i].length() > idLength) header[i] = header[i].substring(0, idLength);
 		}
 
 		// skip second line
