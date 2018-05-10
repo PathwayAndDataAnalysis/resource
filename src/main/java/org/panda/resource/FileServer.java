@@ -1,7 +1,6 @@
 package org.panda.resource;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -95,6 +94,19 @@ public abstract class FileServer
 	public Stream<String> getResourceAsStream(String filename) throws IOException
 	{
 		return Files.lines(Paths.get(ResourceDirectory.get() + File.separator + filename));
+	}
+
+	public BufferedReader getResourceReader(String filename)
+	{
+		try
+		{
+			return new BufferedReader(new FileReader(ResourceDirectory.get() + File.separator + filename));
+		}
+		catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	/**

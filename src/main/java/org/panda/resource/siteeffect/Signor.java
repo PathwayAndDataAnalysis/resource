@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 /**
- * Serves the PhosphoNetworks database.
+ * Serves the Signor database.
  *
  * @author Ozgun Babur
  */
