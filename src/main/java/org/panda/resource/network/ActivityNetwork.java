@@ -42,13 +42,13 @@ public class ActivityNetwork extends FileServer
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{};
+		return new String[]{"SPIKE.xml"};
 	}
 
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{};
+		return new String[]{"http://www.cs.tau.ac.il/~spike/download/LatestSpikeDB.xml.zip"};
 	}
 
 	@Override
@@ -56,6 +56,11 @@ public class ActivityNetwork extends FileServer
 	{
 		posGraph = new DirectedGraph("Activation", "activates");
 		negGraph = new DirectedGraph("Inhibition", "inhibits");
+
+
+
+
+		// Inferring from SignedPC phospho graph
 
 		PhosphoGraph posP = new PhosphoGraph("Phosphorylation", SignedType.PHOSPHORYLATES.getTag());
 
