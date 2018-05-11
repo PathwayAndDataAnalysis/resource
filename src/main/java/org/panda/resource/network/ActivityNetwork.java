@@ -3,13 +3,25 @@ package org.panda.resource.network;
 import org.panda.resource.FileServer;
 import org.panda.resource.signednetwork.SignedType;
 import org.panda.resource.siteeffect.SiteEffectCollective;
+import org.panda.utility.CollectionUtil;
+import org.panda.utility.TermCounter;
 import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.PhosphoGraph;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.*;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.util.Scanner;
-import java.util.Set;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * Serves the PhosphoNetworks database.
@@ -42,13 +54,7 @@ public class ActivityNetwork extends FileServer
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{"SPIKE.xml"};
-	}
-
-	@Override
-	public String[] getDistantURLs()
-	{
-		return new String[]{"http://www.cs.tau.ac.il/~spike/download/LatestSpikeDB.xml.zip"};
+		return new String[]{"SPIKE.sif"};
 	}
 
 	@Override
@@ -57,8 +63,10 @@ public class ActivityNetwork extends FileServer
 		posGraph = new DirectedGraph("Activation", "activates");
 		negGraph = new DirectedGraph("Inhibition", "inhibits");
 
+		// Load SPIKE
 
-
+		posGraph.load(locateInBase(getLocalFilenames()[0]), Collections.singleton("activates"));
+		negGraph.load(locateInBase(getLocalFilenames()[0]), Collections.singleton("inhibits"));
 
 		// Inferring from SignedPC phospho graph
 
@@ -77,6 +85,7 @@ public class ActivityNetwork extends FileServer
 
 		return true;
 	}
+
 
 	private void harvest(PhosphoGraph phosG, SiteEffectCollective sec, DirectedGraph posEffGraph, DirectedGraph negEffGraph)
 	{
@@ -120,9 +129,127 @@ public class ActivityNetwork extends FileServer
 		return 0;
 	}
 
-	public static void main(String[] args)
+	private static void parseSPIKE() throws IOException, SAXException, ParserConfigurationException
 	{
-		Set<String> inh = ActivityNetwork.get().getNegativeGraph().getDownstream("EGFR");
-		System.out.println("inh = " + inh);
+		DirectedGraph posGraph = new DirectedGraph("Activation", "activates");
+		DirectedGraph negGraph = new DirectedGraph("Inhibition", "inhibits");
+
+		TermCounter tc = new TermCounter();
+
+		Map<String, String> idToGene = new HashMap<>();
+		Map<String, Set<String>> groupToMembers = new HashMap<>();
+
+
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse("SPIKE.xml");
+		doc.getDocumentElement().normalize();
+
+		NodeList list = doc.getElementsByTagName("Gene");
+		for (int i = 0; i < list.getLength(); i++)
+		{
+			Node item = list.item(i);
+			NamedNodeMap attributes = item.getAttributes();
+			String name = attributes.getNamedItem("name").getNodeValue();
+			String id = attributes.getNamedItem("id").getNodeValue();
+			idToGene.put(id, name);
+		}
+
+		list = doc.getElementsByTagName("Group");
+		for (int i = 0; i < list.getLength(); i++)
+		{
+			Node item = list.item(i);
+			NamedNodeMap attributes = item.getAttributes();
+			String id = attributes.getNamedItem("id").getNodeValue();
+			groupToMembers.put(id, new HashSet<>());
+
+			NodeList children = item.getChildNodes();
+			for (int j = 0; j < children.getLength(); j++)
+			{
+				Node child = children.item(j);
+				if (child.getNodeName().equals("Member"))
+				{
+					String memID = child.getAttributes().getNamedItem("ref").getNodeValue();
+					groupToMembers.get(id).add(memID);
+				}
+			}
+		}
+
+		list = doc.getElementsByTagName("Regulation");
+		for (int i = 0; i < list.getLength(); i++)
+		{
+			Node item = list.item(i);
+
+			String effect = item.getAttributes().getNamedItem("effect").getNodeValue();
+			if (effect.equals("3")) continue;
+			assert effect.equals("1") || effect.equals("2") : "A new effect?: " + effect;
+
+			tc.addTerm(effect);
+
+			String sourceID = null;
+			String targetID = null;
+			Set<String> pmIDs = new HashSet<>();
+
+			NodeList children = item.getChildNodes();
+			for (int j = 0; j < children.getLength(); j++)
+			{
+				Node child = children.item(j);
+				if (child.getNodeName().equals("Source"))
+				{
+					sourceID = child.getAttributes().getNamedItem("ref").getNodeValue();
+				}
+				else if (child.getNodeName().equals("PhysicalTarget"))
+				{
+					targetID = child.getAttributes().getNamedItem("ref").getNodeValue();
+				}
+				else if (child.getNodeName().equals("Reference"))
+				{
+					pmIDs.add("PMID:" + child.getAttributes().getNamedItem("pmid").getNodeValue());
+				}
+			}
+
+			for (String source : getNames(sourceID, idToGene, groupToMembers))
+			{
+				for (String target : getNames(targetID, idToGene, groupToMembers))
+				{
+					DirectedGraph graph = effect.equals("1") ? posGraph : negGraph;
+					graph.putRelation(source, target, CollectionUtil.merge(pmIDs, ";"));
+				}
+			}
+		}
+
+		tc.print();
+
+		posGraph.printStats();
+		negGraph.printStats();
+
+		BufferedWriter writer = Files.newBufferedWriter(Paths.get("SPIKE.sif"));
+		posGraph.write(writer);
+		negGraph.write(writer);
+		writer.close();
+	}
+
+	private static Set<String> getNames(String id, Map<String, String> idToGene, Map<String, Set<String>> groupToMembers)
+	{
+		if (idToGene.containsKey(id)) return Collections.singleton(idToGene.get(id));
+
+		if (groupToMembers.containsKey(id))
+		{
+			Set<String> set = new HashSet<>();
+			for (String memID : groupToMembers.get(id))
+			{
+				set.addAll(getNames(memID, idToGene, groupToMembers));
+			}
+			return set;
+		}
+
+		return Collections.emptySet();
+	}
+
+
+	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException
+	{
+		System.out.println(get().getNegativeGraph().getDownstream("EGFR"));
+//		parseSPIKE();
 	}
 }
