@@ -48,6 +48,15 @@ public class ExpressionReader
 
 		String[] header = line.split("\t");
 
+		// Remove possible quotes
+		for (int i = 0; i < header.length; i++)
+		{
+			if (header[i].startsWith("\"") && header[i].endsWith("\""))
+			{
+				header[i] = header[i].substring(1, header[i].length() - 1);
+			}
+		}
+
 		int ss = 0;
 		while (!header[ss].startsWith("TCGA")) ss++;
 
@@ -63,6 +72,7 @@ public class ExpressionReader
 		{
 			line = sc.nextLine();
 			String id = line.substring(0, line.indexOf("|"));
+			if (id.startsWith("\"")) id = id.substring(1);
 
 			if (genes != null && !genes.contains(id)) continue;
 			if (id.equals("?")) continue;
@@ -71,6 +81,8 @@ public class ExpressionReader
 
 			for (int i = ss; i < header.length; i++)
 			{
+				if (token[i].equals("NA")) token[i] = "NaN";
+
 				Double val = Double.parseDouble(token[i]);
 
 				if (!data.containsKey(id)) data.put(id, new HashMap<>());

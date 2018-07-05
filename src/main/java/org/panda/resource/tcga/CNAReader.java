@@ -177,6 +177,8 @@ public class CNAReader
 		assert exp.length == samples.length;
 		int[] alterations = getGeneAlterationArray(id, samples);
 
+		if (alterations == null) return null;
+
 		boolean[] noChange = getNoChange(alterations);
 		double[] noChVals = ArrayUtil.subset(exp, noChange);
 		if (noChVals.length == 0) return null;

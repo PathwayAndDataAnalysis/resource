@@ -45,6 +45,8 @@ public class CustomExpressionReader extends ExpressionReader
 
 			for (int i = ss; i < header.length; i++)
 			{
+				if (token[i].equals("NA")) token[i] = "NaN";
+
 				Double val = Double.parseDouble(token[i]);
 
 				if (!data.containsKey(id)) data.put(id, new HashMap<>());

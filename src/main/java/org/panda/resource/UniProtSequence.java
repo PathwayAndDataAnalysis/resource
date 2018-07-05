@@ -39,9 +39,15 @@ public class UniProtSequence extends FileServer
 			"uniprot_sprot.fasta.gz"};
 	}
 
-	public int getStartLocation(String name, String peptide)
+	public int getStartLocation(String nameOrID, String peptide)
 	{
-		String id = nameToID.get(name);
+		String id = nameToID.get(nameOrID);
+
+		if (id == null && idToSeq.containsKey(nameOrID))
+		{
+			id = nameOrID;
+		}
+
 		if (id != null)
 		{
 			String seq = idToSeq.get(id);
@@ -51,6 +57,11 @@ public class UniProtSequence extends FileServer
 		}
 
 		return -1;
+	}
+
+	public String getIDOfName(String uniprotName)
+	{
+		return nameToID.get(uniprotName);
 	}
 
 	@Override

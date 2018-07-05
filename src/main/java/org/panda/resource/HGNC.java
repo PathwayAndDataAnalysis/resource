@@ -197,8 +197,8 @@ public class HGNC extends FileServer
 
 	public static void main(String[] args)
 	{
-//		HGNC hgnc = new HGNC();
-//		System.out.println(hgnc.getSymbol("CDC42"));
+		HGNC hgnc = new HGNC();
+		System.out.println(hgnc.getSymbol("TBX2AR"));
 //		System.out.println(hgnc.getChromosomeLoc("ATAD2"));
 //		Set<String> set = hgnc.getSymbolsOfChromosome("8q24");
 //		for (String sym : set)
@@ -208,7 +208,7 @@ public class HGNC extends FileServer
 //
 //		System.out.println(hgnc.getChromosomeLoc("MYC"));
 
-		convertSymbols();
+//		convertSymbols();
 	}
 
 	private static void convertSymbols()

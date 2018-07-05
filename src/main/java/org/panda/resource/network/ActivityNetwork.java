@@ -65,8 +65,8 @@ public class ActivityNetwork extends FileServer
 
 		// Load SPIKE
 
-		posGraph.load(locateInBase(getLocalFilenames()[0]), Collections.singleton("activates"));
-		negGraph.load(locateInBase(getLocalFilenames()[0]), Collections.singleton("inhibits"));
+//		posGraph.load(locateInBase(getLocalFilenames()[0]), Collections.singleton("activates"));
+//		negGraph.load(locateInBase(getLocalFilenames()[0]), Collections.singleton("inhibits"));
 
 		// Inferring from SignedPC phospho graph
 
@@ -83,6 +83,8 @@ public class ActivityNetwork extends FileServer
 		harvest(posP, sec, posGraph, negGraph);
 		harvest(negP, sec, negGraph, posGraph);
 
+
+
 		return true;
 	}
 
@@ -93,8 +95,8 @@ public class ActivityNetwork extends FileServer
 			phosG.getSites(s, t).forEach(site ->
 			{
 				int e = getEffect(site, t, sec);
-				if (e == 1) posEffGraph.putRelation(s, t);
-				else if (e == -1) negEffGraph.putRelation(s, t);
+				if (e == 1) posEffGraph.putRelation(s, t, phosG.getMediatorsInString(s, t));
+				else if (e == -1) negEffGraph.putRelation(s, t, phosG.getMediatorsInString(s, t));
 			})));
 	}
 
@@ -249,7 +251,9 @@ public class ActivityNetwork extends FileServer
 
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException
 	{
-		System.out.println(get().getNegativeGraph().getDownstream("EGFR"));
-//		parseSPIKE();
+		DirectedGraph graph = get().getPositiveGraph();
+		graph.write("activity-pos.sif");
+		graph = get().getNegativeGraph();
+		graph.write("activity-neg.sif");
 	}
 }

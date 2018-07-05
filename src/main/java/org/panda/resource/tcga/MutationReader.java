@@ -28,20 +28,20 @@ public class MutationReader
 
 	public MutationReader(String filename, String... mutTypes) throws IOException
 	{
-		this(filename, 12, mutTypes);
+		this(filename, 12, null, mutTypes);
 	}
 
-	public MutationReader(String filename, int idLength, String... mutTypes) throws IOException
+	public MutationReader(String filename, int idLength, Set<String> genes, String... mutTypes) throws IOException
 	{
 		this.mutMap = new LinkedHashMap<>();
 		this.sampleSet = new HashSet<>();
 		this.idLength = idLength;
-		if (filename != null) load(filename,
+		if (filename != null) load(filename, genes,
 			mutTypes == null || mutTypes.length == 0 || (mutTypes.length == 1 && mutTypes[0] == null) ? null :
 				new HashSet<>(Arrays.asList(mutTypes)));
 	}
 
-	public void load(String filename, Set<String> mutTypes) throws IOException
+	public void load(String filename, Set<String> genes, Set<String> mutTypes) throws IOException
 	{
 		int typeInd = -1;
 		int sampleInd = -1;
@@ -69,11 +69,11 @@ public class MutationReader
 
 		}
 
-		processLines(filename, typeInd, sampleInd, protChInd, mutTypes);
+		processLines(filename, typeInd, sampleInd, protChInd, mutTypes, genes);
 	}
 
 	private void processLines(String filename, int typeInd, int sampleInd, int protChInd,
-		Set<String> mutTypes) throws IOException
+		Set<String> mutTypes, Set<String> genes) throws IOException
 	{
 		Files.lines(Paths.get(filename)).filter(l -> !l.startsWith("#")).filter(l -> !l.startsWith("Hugo_Symbol"))
 			.map(l -> l.split("\t"))
@@ -82,9 +82,12 @@ public class MutationReader
 			.forEach(token ->
 		{
 			String id = token[0];
+
 			String sample = token[sampleInd];
 			if (sample.length() > idLength) sample = sample.substring(0, idLength);
 			sampleSet.add(sample);
+
+			if (genes != null && !genes.contains(id)) return;
 
 			String type = token[typeInd];
 
@@ -142,7 +145,7 @@ public class MutationReader
 			}
 			return b;
 		}
-		return null;
+		return new boolean[samples.length];
 	}
 
 	/**
