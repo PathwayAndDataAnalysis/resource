@@ -111,7 +111,7 @@ public class UniProtSequence extends FileServer
 
 	public static void main(String[] args)
 	{
-		int startLocation = get().getStartLocation("I2BP2_MOUSE", "RKPSPEPEGEVGPPK");
+		int startLocation = get().getStartLocation("P62158", "vFDk".toUpperCase());
 		System.out.println("startLocation = " + startLocation);
 	}
 }

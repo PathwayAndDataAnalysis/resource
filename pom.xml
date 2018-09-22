@@ -8,10 +8,6 @@
 	<artifactId>resource</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 
-	<properties>
-		<causality.version>1.0.1-SNAPSHOT</causality.version>
-	</properties>
-
 	<repositories>
 		<repository>
 			<id>panda</id>

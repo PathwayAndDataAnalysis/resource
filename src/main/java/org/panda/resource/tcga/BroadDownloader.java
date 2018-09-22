@@ -204,7 +204,7 @@ public class BroadDownloader
 
 	public static List<String> getStudyCodes(String date) throws IOException
 	{
-		List<String> codes = new ArrayList<String>();
+		List<String> codes = new ArrayList<>();
 		Scanner sc = new Scanner(new URL(BROAD_DATA_URL_PREFIX + date + "/ingested_data.tsv").openStream());
 		sc.nextLine();
 		while (sc.hasNextLine())
@@ -239,8 +239,8 @@ public class BroadDownloader
 //		List<String> codes = getStudyCodes("2015_08_21");
 //		System.out.println(codes);
 
-		download("2016_01_28", "/home/babur/Documents/TCGA/UVM", "UVM");
+//		download("2016_01_28", "/home/babur/Documents/TCGA/UVM", "UVM");
 
-//		downloadAll("2016_01_28", "/home/babur/Documents/TCGA");
+		downloadAll("2016_01_28", "/home/ozgun/Data/TCGA");
 	}
 }

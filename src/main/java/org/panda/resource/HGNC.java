@@ -1,5 +1,6 @@
 package org.panda.resource;
 
+import org.panda.utility.FileUtil;
 import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
 import org.panda.utility.graph.UndirectedGraph;
@@ -197,8 +198,9 @@ public class HGNC extends FileServer
 
 	public static void main(String[] args)
 	{
-		HGNC hgnc = new HGNC();
-		System.out.println(hgnc.getSymbol("TBX2AR"));
+//		HGNC hgnc = new HGNC();
+//		System.out.println(hgnc.getSymbol("P68133"));
+
 //		System.out.println(hgnc.getChromosomeLoc("ATAD2"));
 //		Set<String> set = hgnc.getSymbolsOfChromosome("8q24");
 //		for (String sym : set)
@@ -209,6 +211,22 @@ public class HGNC extends FileServer
 //		System.out.println(hgnc.getChromosomeLoc("MYC"));
 
 //		convertSymbols();
+		convertFile("/home/ozgun/Data/Aslan/platelet-lysine-methylation/140-uniprot.txt");
+	}
+
+	private static void convertFile(String file)
+	{
+		Set<String> notFound = new HashSet<>();
+
+		for (String id : FileUtil.getLinesInSet(file))
+		{
+			String symbol = get().getSymbol(id);
+			if (symbol == null) notFound.add(id);
+			else System.out.println(symbol);
+		}
+
+		System.out.println("\nNot found:");
+		notFound.forEach(System.out::println);
 	}
 
 	private static void convertSymbols()
