@@ -23,7 +23,7 @@ public class HGNC extends FileServer
 	private Map<String, String> id2sym;
 	private Map<String, String> old2new;
 	private Map<String, String> uniprot2sym;
-	private Map<String, Set<String>> families = new HashMap<>();
+	private Map<String, Set<String>> families;
 
 	public static synchronized HGNC get()
 	{
@@ -126,6 +126,11 @@ public class HGNC extends FileServer
 	@Override
 	public boolean load() throws IOException
 	{
+		return load(getResourceAsStream(getLocalFilenames()[0]));
+	}
+
+	public boolean load(Stream<String> resourceStream) throws IOException
+	{
 		sym2id = new HashMap<>();
 		sym2chr = new HashMap<>();
 		id2sym = new HashMap<>();
@@ -133,7 +138,7 @@ public class HGNC extends FileServer
 		uniprot2sym = new HashMap<>();
 		families = new HashMap<>();
 
-		getResourceAsStream(getLocalFilenames()[0]).skip(1).forEach(line -> {
+		resourceStream.skip(1).forEach(line -> {
 			String[] token = line.split("\t");
 			String sym = token[1];
 			String id = token[0];

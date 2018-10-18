@@ -163,4 +163,14 @@ public abstract class SiteEffectServer extends FileServer
 		else if (!found.isEmpty()) return ProteomicsFileRow.SiteEffect.COMPLEX;
 		return null;
 	}
+
+	public Set<String> getAllGenes()
+	{
+		return typeMap.keySet();
+	}
+
+	public Set<String> getSites(String gene)
+	{
+		return typeMap.containsKey(gene) ? typeMap.get(gene).keySet() : Collections.emptySet();
+	}
 }

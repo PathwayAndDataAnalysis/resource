@@ -16,7 +16,7 @@ public class PhosphoSitePlus extends SiteEffectServer
 {
 	private static PhosphoSitePlus instance;
 
-	Map<String, Map<String, String>> actualMap;
+	private Map<String, Map<String, String>> actualMap;
 
 	public static synchronized PhosphoSitePlus get()
 	{

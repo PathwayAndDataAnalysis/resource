@@ -183,10 +183,11 @@ public class SignedPC extends PathwayCommons
 
 	public static void main(String[] args)
 	{
-//		printNetworkSizes();
-		DirectedGraph graph = SignedPCNoTransfac.get().getGraph(SignedType.UPREGULATES_EXPRESSION);
-		Set<String> set = graph.getDownstream("RB1");
-		System.out.println("set.contains(\"MYC\") = " + set.contains("MYC"));
+		printNetworkSizes();
+
+//		DirectedGraph graph = SignedPCNoTransfac.get().getGraph(SignedType.UPREGULATES_EXPRESSION);
+//		Set<String> set = graph.getDownstream("RB1");
+//		System.out.println("set.contains(\"MYC\") = " + set.contains("MYC"));
 	}
 
 	private static void printNetworkSizes()
