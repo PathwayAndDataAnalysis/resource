@@ -39,6 +39,9 @@ public class UniProtSequence extends FileServer
 			"uniprot_sprot.fasta.gz"};
 	}
 
+	/**
+	 * Starts from 1.
+	 */
 	public int getStartLocation(String nameOrID, String peptide)
 	{
 		String id = nameToID.get(nameOrID);
@@ -57,6 +60,31 @@ public class UniProtSequence extends FileServer
 		}
 
 		return -1;
+	}
+
+	public String getAminoacidAt(String nameOrID, int loc)
+	{
+		if (loc < 1) throw new IllegalArgumentException("Location cannot be smaller than 1. loc = " + loc);
+
+		String id = nameToID.get(nameOrID);
+
+		if (id == null && idToSeq.containsKey(nameOrID))
+		{
+			id = nameOrID;
+		}
+
+		if (id != null)
+		{
+			String seq = idToSeq.get(id);
+			assert seq != null;
+
+			if (loc <= seq.length())
+			{
+				return seq.substring(loc - 1, loc);
+			}
+		}
+
+		return null;
 	}
 
 	public String getIDOfName(String uniprotName)

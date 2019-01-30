@@ -78,8 +78,12 @@ public class IPTMNet extends FileServer
 	public static void main(String[] args)
 	{
 		PhosphoGraph pn = get().getGraph();
-		pn.printStats();
-		boolean contains = pn.getDownstream("MAPK14").contains("MAPKAPK2");
-		System.out.println("contains = " + contains);
+//		pn.printStats();
+
+		Set<String> sites = pn.getSites("SRC", "ITGB3");
+		sites.forEach(System.out::println);
+
+//		boolean contains = pn.getUpstream("ITGB3").contains("SRC");
+//		System.out.println("contains = " + contains);
 	}
 }

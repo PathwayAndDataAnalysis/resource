@@ -1,6 +1,7 @@
 package org.panda.resource.tcga;
 
 import org.panda.resource.siteeffect.PhosphoSitePlus;
+import org.panda.utility.statistics.Summary;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -217,6 +218,11 @@ public class ProteomicsFileRow implements Cloneable
 		{
 			e.printStackTrace();
 		}
+	}
+
+	public double getStDev()
+	{
+		return Summary.stdev(vals);
 	}
 
 	public enum Type

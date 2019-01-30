@@ -61,7 +61,7 @@ public abstract class FileServer
 		{
 			boolean success;
 
-			if (url[i].endsWith(".zip") || url[i].endsWith(".gz"))
+			if (url[i].endsWith(".zip") || url[i].endsWith(".gz") || url[i].endsWith(".xz"))
 			{
 				success = Download.downloadAndUncompress(url[i], loc + File.separator + filename[i]);
 			}

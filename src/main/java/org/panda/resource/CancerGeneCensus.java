@@ -101,10 +101,10 @@ public class CancerGeneCensus extends FileServer
 		System.out.println("hgnc = " + hgnc.size());
 		System.out.println("genes = " + genes.size());
 
-//		System.out.println(getAllSymbols().contains("LLP"));
+//		System.out.println(getAllGenes().contains("LLP"));
 
 //		Set<String> genes = HGNC.get().getSymbolsOfChromosome("1q");
-//		genes.retainAll(CancerGeneCensus.get().getAllSymbols());
+//		genes.retainAll(CancerGeneCensus.get().getAllGenes());
 //		System.out.println("genes = " + genes);
 
 		Set<String> onco = new HashSet<>(OncoKB.get().getAllSymbols());

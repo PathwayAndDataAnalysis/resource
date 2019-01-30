@@ -129,6 +129,15 @@ public class ExpressionReader
 		return null;
 	}
 
+	public double getGeneAlteration(String id, String sample)
+	{
+		if (data.containsKey(id) && data.get(id).containsKey(sample))
+		{
+			return data.get(id).get(sample);
+		}
+		return Double.NaN;
+	}
+
 	public void printStdevHistogram(double binSize)
 	{
 		Histogram h1 = new Histogram(binSize);

@@ -1,5 +1,7 @@
-package org.panda.resource;
+package org.panda.resource.proteomics;
 
+import org.panda.resource.FileServer;
+import org.panda.resource.HGNC;
 import org.panda.utility.ArrayUtil;
 import org.panda.utility.FileUtil;
 
@@ -124,8 +126,42 @@ public class RPPAIDMapper extends FileServer
 		writer.close();
 	}
 
+	public static void convertFromMDACCToCP(String mdaccFile, String cpOutFile) throws IOException
+	{
+		Map<String, Map<String, Double>> map = MDACCFormatRPPALoader.load(mdaccFile);
+		writeAsCPFile(map, cpOutFile, null);
+	}
+
+	public static void writeAsCPFile(Map<String, Map<String, Double>> map, String outFile, List<String> sampleOrder) throws IOException
+	{
+		List<String> samples = sampleOrder == null ? new ArrayList<>(map.get(map.keySet().iterator().next()).keySet()) : sampleOrder;
+		if (sampleOrder == null) samples.sort(String::compareTo);
+
+		BufferedWriter writer = Files.newBufferedWriter(Paths.get(outFile));
+
+		writer.write("ID\tSymbols\tSites\tEffect");
+
+		samples.forEach(s -> FileUtil.tab_write(s, writer));
+
+		map.keySet().stream().sorted().forEach(ab ->
+		{
+			String pref = get().getPreferredID(ab);
+
+			if (pref == null) throw new RuntimeException("Encountered unrecognized antibody name: " + ab);
+
+			FileUtil.lnwrite(get().idToPlatformLine.get(pref), writer);
+
+			samples.forEach(s -> FileUtil.tab_write(map.get(ab).get(s), writer));
+		});
+
+		writer.close();
+	}
+
 	public static void main(String[] args) throws IOException
 	{
-		prepareResourceFileFromInitialMapping();
+//		prepareResourceFileFromInitialMapping();
+
+		String dir = "/home/ozgun/Analyses/Alexey/";
+		convertFromMDACCToCP(dir + "14_Alexey_Danilov__Taylor_Rowland_B.csv", dir + "data.txt");
 	}
 }

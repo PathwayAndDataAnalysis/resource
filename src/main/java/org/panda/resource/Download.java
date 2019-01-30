@@ -3,6 +3,7 @@ package org.panda.resource;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
+import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
 import java.net.URL;
@@ -103,6 +104,8 @@ public class Download
 
 			if (address.endsWith(".gz"))
 				in = new GZIPInputStream(con.getInputStream());
+			else if (address.endsWith(".xz"))
+				in = new XZInputStream(con.getInputStream());
 			else in = new ZipInputStream(con.getInputStream());
 
 			// Open the output file

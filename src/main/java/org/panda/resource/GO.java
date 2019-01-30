@@ -1,5 +1,9 @@
 package org.panda.resource;
 
+import org.panda.utility.CollectionUtil;
+import org.panda.utility.statistics.FishersExactTest;
+import org.panda.utility.statistics.GeneSetEnrichment;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +34,19 @@ public class GO extends FileServer
 	{
 		if (geneToGO.containsKey(gene)) return geneToGO.get(gene);
 		return Collections.emptySet();
+	}
+
+	public Set<String> getCommonGOIDs(String... gene)
+	{
+		if (gene == null) return Collections.emptySet();
+		if (gene.length == 1) return getGOIDs(gene[0]);
+
+		Set<String> ids = getGOIDs(gene[0]);
+		for (int i = 1; i < gene.length; i++)
+		{
+			ids.retainAll(getGOIDs(gene[i]));
+		}
+		return ids;
 	}
 
 	public Set<String> getAllGenes()
@@ -105,6 +122,26 @@ public class GO extends FileServer
 		}
 	}
 
+	public void printAssociatedCommonTerms(String... gene)
+	{
+		Set<String> ids = getCommonGOIDs(gene);
+
+		for (String id : ids)
+		{
+			String name = idToName.get(id);
+
+			if (!name.startsWith("positive regulation ") && !name.startsWith("negative regulation "))
+			{
+				System.out.println(id + "\t" + name);
+			}
+		}
+	}
+
+	public Set<String> getGenesOfTerm(String goID)
+	{
+		return goToGene.get(goID);
+	}
+
 	public Map<String, String> getTermsContaining(String query)
 	{
 		return idToName.keySet().stream().filter(id -> idToName.get(id).contains(query))
@@ -127,6 +164,20 @@ public class GO extends FileServer
 		}
 		return genes;
 	}
+
+	/**
+	 * Returns Fisher's exact test p-values for enrichment of each GO term. Does not correct for multiple hypothesis
+	 * testing.
+	 *
+	 * @param background pass null if the background is just all possible genes
+	 */
+	public Map<String, Double> calculateEnrichment(Collection<String> queryGenes, Collection<String> background,
+		int minNumOfMembersInAGroup, int maxNumOfMembersInAGroup)
+	{
+		return GeneSetEnrichment.calculateEnrichment(queryGenes, background, minNumOfMembersInAGroup,
+			maxNumOfMembersInAGroup, goToGene);
+	}
+
 
 	public static GO get()
 	{
@@ -240,7 +291,12 @@ public class GO extends FileServer
 
 //		checkInterestTermAssociationRate();
 
-		get().printAssociatedTerms("MPHOSPH10", null);
+//		get().printAssociatedCommonTerms("CWF19L2");
+
+//		Set<String> genes1 = get().getGenesOfTerm("GO:0006629");
+//		Set<String> genes2 = get().getGenesOfTerm("GO:0008203");
+//		CollectionUtil.printVennCounts(genes1, genes2);
+//		genes2.stream().sorted().forEach(System.out::println);
 	}
 
 	private static List<String> readPanCanGenes() throws IOException

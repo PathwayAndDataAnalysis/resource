@@ -15,6 +15,7 @@ public class PCPathwayHGNC extends FileServer
 	Map<String, Set<String>> idToGenes;
 	Map<Set<String>, Set<Pathway>> genesToPathwaySets;
 	Set<String> allGenes;
+	Map<String, Pathway> idToPathway;
 
 	@Override
 	public String[] getLocalFilenames()
@@ -33,11 +34,14 @@ public class PCPathwayHGNC extends FileServer
 	{
 		idToGenes = new HashMap<>();
 		genesToPathwaySets = new HashMap<>();
+		idToPathway = new HashMap<>();
 
 		getResourceAsStream(getLocalFilenames()[0]).forEach(line ->
 		{
 			Pathway p = new Pathway(line);
 			if (p.isInvalid()) return;
+
+			idToPathway.put(p.id, p);
 
 			if (!genesToPathwaySets.containsKey(p.genes))
 			{
@@ -99,6 +103,25 @@ public class PCPathwayHGNC extends FileServer
 	public Set<String> getGeneSet(String id)
 	{
 		return idToGenes.get(id);
+	}
+
+	public Pathway getPathway(String id)
+	{
+		return idToPathway.get(id);
+	}
+
+	public String getPathwayName(String id)
+	{
+		return idToPathway.containsKey(id) ? idToPathway.get(id).getName() : null;
+	}
+
+	public Set<String> getOverlappingGenes(String pathwayID, Set<String> query)
+	{
+		if (!idToGenes.containsKey(pathwayID)) return Collections.emptySet();
+
+		Set<String> set = new HashSet<>(getGeneSet(pathwayID));
+		set.retainAll(query);
+		return set;
 	}
 
 	public class Pathway

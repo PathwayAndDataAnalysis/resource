@@ -3,17 +3,17 @@ package org.panda.resource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
  */
 public class SiteMappingMouseToHuman extends FileServer
 {
-	private static Map<String, String> mapping;
+
+	Map<String, Set<String>> mouseToHumanUP;
+
+	Map<String, Map<String, String>> mouseToHumanSiteMap;
 
 	private static SiteMappingMouseToHuman instance;
 	public static SiteMappingMouseToHuman get()
@@ -28,55 +28,80 @@ public class SiteMappingMouseToHuman extends FileServer
 		return new String[]{"SiteMappingMouseToHuman.txt"};
 	}
 
-	public String map(String uniprotID, String site)
+
+
+	public Set<String> mapToHumanProt(String mUP)
 	{
-		return mapping.get(uniprotID + "-" + site);
+		if (mouseToHumanUP.containsKey(mUP)) return mouseToHumanUP.get(mUP);
+		return Collections.emptySet();
+	}
+
+	public Map<String, List<String>> mapToHumanSite(String mUP, String... sites)
+	{
+		Map<String, List<String>> result = new HashMap<>();
+
+		if (mouseToHumanUP.containsKey(mUP))
+		{
+			for (String hUP : mouseToHumanUP.get(mUP))
+			{
+				String key = mUP + " " + hUP;
+				List<String> siteList = new ArrayList<>();
+				Map<String, String> siteMap = mouseToHumanSiteMap.get(key);
+
+				for (String mSite : sites)
+				{
+					String hSite = siteMap.get(mSite);
+
+					if (hSite != null)
+					{
+						siteList.add(hSite);
+					}
+				}
+				if (!siteList.isEmpty())
+				{
+					result.put(hUP, siteList);
+				}
+			}
+			return result;
+		}
+		else return Collections.emptyMap();
 	}
 
 	@Override
 	public boolean load() throws IOException
 	{
-		mapping = new HashMap<>();
-		Map<String, Set<String>> synonymMap = new HashMap<>();
+		mouseToHumanUP = new HashMap<>();
+		mouseToHumanSiteMap = new HashMap<>();
 
 		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0]))).skip(1).map(l -> l.split("\t")).forEach(t ->
 		{
-			String syms = t[0];
-			String mouseID = t[2];
-			String hSite = t[3];
-			String mSite = t[4];
+			String hUP = t[2];
+			String mUP = t[3];
+			String hSite = t[4];
+			String mSite = t[5];
 
-			double eValue = t[5].equals("--") ? 1 : Double.valueOf(t[5]);
-			int mismatch = Integer.valueOf(t[6]);
+			if (mSite.equals("ND")) return;
+
+			double eValue = t[6].equals("--") ? 1 : Double.valueOf(t[6]);
+			int mismatch = Integer.valueOf(t[7]);
 
 			if (eValue > 0.01 && mismatch > 3) return;
 
-			String otherNames = t[8];
+			if (!mouseToHumanUP.containsKey(mUP)) mouseToHumanUP.put(mUP, new HashSet<>());
+			mouseToHumanUP.get(mUP).add(hUP);
 
-			String[] sym = syms.split("; ");
-			String[] syn = otherNames.equals("NA") ? null : otherNames.split("; ", -1);
+			String key = mUP + " " + hUP;
 
-			assert otherNames.equals("NA") || syn.length == sym.length :
-				"syms=" + syms + "\tsyns=" + otherNames;
-
-			for (int i = 0; i < sym.length; i++)
-			{
-				mapping.put(mouseID + "-" + mSite, sym[i] + "-" + hSite);
-
-				if (syn != null)
-				{
-					for (String name : syn[i].split(" "))
-					{
-						if (!name.isEmpty())
-						{
-							if (!synonymMap.containsKey(sym[i])) synonymMap.put(sym[i], new HashSet<>());
-							synonymMap.get(sym[i]).add(syn[i]);
-						}
-					}
-				}
-			}
+			if (!mouseToHumanSiteMap.containsKey(key)) mouseToHumanSiteMap.put(key, new HashMap<>());
+			mouseToHumanSiteMap.get(key).put(mSite, hSite);
 		});
 
 		return true;
+	}
+
+	public static void main(String[] args)
+	{
+		Map<String, List<String>> map = get().mapToHumanSite("Q172634", "T23");
+		System.out.println("map = " + map);
 	}
 }
