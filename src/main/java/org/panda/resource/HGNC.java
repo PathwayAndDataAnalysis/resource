@@ -32,6 +32,20 @@ public class HGNC extends FileServer
 		return instance;
 	}
 
+	public static synchronized void initSingletonWith(Stream<String> resourceStream) throws IOException
+	{
+		instance = new HGNC()
+		{
+			@Override
+			public synchronized boolean init() throws IOException
+			{
+				return true;
+			}
+		};
+
+		instance.load(resourceStream);
+	}
+
 	/**
 	 * Gets the latest approved official symbol related to the given ID or symbol. If the parameter
 	 * is ID, then it should start with "HGNC:".

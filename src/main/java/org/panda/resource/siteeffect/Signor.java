@@ -1,13 +1,9 @@
 package org.panda.resource.siteeffect;
 
-import org.panda.utility.TermCounter;
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Scanner;
 
 /**
  * Serves the Signor database.
@@ -22,6 +18,20 @@ public class Signor extends SiteEffectServer
 	{
 		if (instance == null) instance = new Signor();
 		return instance;
+	}
+
+	public static synchronized void initSingletonEmpty()
+	{
+		instance = new Signor()
+		{
+			@Override
+			public synchronized boolean init() throws IOException
+			{
+				return true;
+			}
+		};
+
+		instance.typeMap = new HashMap<>();
 	}
 
 	@Override

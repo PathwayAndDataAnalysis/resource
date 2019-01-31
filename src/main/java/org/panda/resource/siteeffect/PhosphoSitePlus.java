@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Provides phospho-site effects from PhosphoSitePlus.
@@ -22,6 +23,20 @@ public class PhosphoSitePlus extends SiteEffectServer
 	{
 		if (instance == null) instance = new PhosphoSitePlus();
 		return instance;
+	}
+
+	public static synchronized void initSingletonWith(Stream<String> resourceStream)
+	{
+		instance = new PhosphoSitePlus()
+		{
+			@Override
+			public synchronized boolean init() throws IOException
+			{
+				return true;
+			}
+		};
+
+		instance.loadFrom(resourceStream);
 	}
 
 	@Override
@@ -120,6 +135,17 @@ public class PhosphoSitePlus extends SiteEffectServer
 		});
 
 		return true;
+	}
+
+	public void loadFrom(Stream<String> resourceStream)
+	{
+		typeMap = new HashMap<>();
+
+		resourceStream.map(l -> l.split("\t")).forEach(t ->
+		{
+			if (!typeMap.containsKey(t[0])) typeMap.put(t[0], new HashMap<>());
+			typeMap.get(t[0]).put(t[1], Integer.valueOf(t[2]));
+		});
 	}
 
 	public static void main(String[] args)
