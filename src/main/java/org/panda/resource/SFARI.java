@@ -32,12 +32,34 @@ public class SFARI extends FileServer
 		return data.containsKey(sym);
 	}
 
+	public boolean isSyndromic(String gene)
+	{
+		Entry entry = data.get(gene);
+		if (entry != null)
+		{
+			return entry.syndromic;
+		}
+
+		return false;
+	}
+
 	/**
 	 * Low score is better.
 	 */
 	public Set<String> getGenesWithMaxScore(int scoreCutoff)
 	{
 		return data.values().stream().filter(e -> e.scoreSatisfy(scoreCutoff)).map(e -> e.gene).collect(Collectors.toSet());
+	}
+
+	public Set<String> getGenesWithExactScore(int score)
+	{
+		return data.values().stream().filter(e -> score == 0 ? !e.hasScore() : e.hasScore() && e.score == score)
+			.map(e -> e.gene).collect(Collectors.toSet());
+	}
+
+	public Set<String> getGenesSyndromic()
+	{
+		return data.values().stream().filter(e -> e.syndromic).map(e -> e.gene).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -74,6 +96,39 @@ public class SFARI extends FileServer
 		}
 	}
 
+	public String getClassification(String gene)
+	{
+		Entry entry = data.get(gene);
+		if (entry == null) return "";
+
+		String s = entry.syndromic ? "S" : "";
+		if (entry.score != null)
+		{
+			s = entry.score + s;
+		}
+
+		if (s.isEmpty()) s = "?";
+		return s;
+	}
+
+	public Map<String, Set<String>> getGeneSetsUpToGivenRanks(String... ranks)
+	{
+		Map<String, Set<String>> genesMap = new HashMap<>();
+
+		Arrays.stream(ranks).forEach(rank ->
+		{
+			Set<String> genes = rank.equals("all") ? SFARI.get().getAllGenes() :
+				rank.equals("S") ? SFARI.get().getGenesSyndromic() :
+					rank.startsWith("S") ? SFARI.get().getGenesWithMaxScore(Integer.valueOf(rank.substring(1))) :
+						SFARI.get().getGenesWithMaxScore(Integer.valueOf(rank));
+
+			if (rank.startsWith("S") && rank.length() > 1) genes.addAll(SFARI.get().getGenesSyndromic());
+
+			genesMap.put(rank, genes);
+		});
+		return genesMap;
+	}
+
 	class Entry
 	{
 		String gene;
@@ -104,9 +159,25 @@ public class SFARI extends FileServer
 
 	public static void main(String[] args)
 	{
-//		get().plot();
-//		get().getGenesWithMaxScore(4).stream().sorted().forEach(System.out::println);
-		get().getAllGenes().forEach(System.out::println);
+		printStats();
+//		System.out.println(get().isAutismGene("RBFOX1"));
+	}
+
+	private static void printStats()
+	{
+		Set<String> cancer = new HashSet<>(CancerGeneCensus.get().getAllSymbols());
+		cancer.addAll(OncoKB.get().getAllSymbols());
+
+		for (int i = 0; i < 7; i++)
+		{
+			Set<String> genes = SFARI.get().getGenesWithExactScore(i);
+			Set<String> synd = genes.stream().filter(g -> SFARI.get().isSyndromic(g)).collect(Collectors.toSet());
+			genes.removeAll(synd);
+			System.out.println(i + "\t" + genes.size() + "\t" + synd.size());
+			System.out.println(synd.stream().filter(cancer::contains).sorted().collect(Collectors.toList()) + "\t" + genes.stream().filter(cancer::contains).sorted().collect(Collectors.toList()));
+		}
+
+		System.out.println("All genes in SFARI = " + SFARI.get().getAllGenes().size());
 	}
 
 }

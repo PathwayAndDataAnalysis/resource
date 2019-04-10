@@ -150,7 +150,9 @@ public class PathwayCommons extends FileServer
 	 */
 	private void printNetworkSizes()
 	{
-		Graph graph = getGraph(SIFEnum.values());
+		Set<SIFEnum> types = new HashSet<>(Arrays.asList(SIFEnum.values()));
+		types.remove(SIFEnum.NEIGHBOR_OF);
+		Graph graph = getGraph(types.toArray(new SIFType[0]));
 		graph.printStats();
 	}
 

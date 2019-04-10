@@ -20,9 +20,9 @@ public class RPPAIDMapper extends FileServer
 	/**
 	 * Alternative ID to standard ID.
 	 */
-	Map<String, String> altToID;
+	private Map<String, String> altToID;
 
-	Map<String, String> idToPlatformLine;
+	private Map<String, String> idToPlatformLine;
 
 	private static RPPAIDMapper instance;
 
@@ -62,6 +62,14 @@ public class RPPAIDMapper extends FileServer
 
 		writer.close();
 		return notFound;
+	}
+
+	public String[] getPlatformLine(String id)
+	{
+		String pid = getPreferredID(id);
+		if (pid == null) throw new IllegalArgumentException("ID not recognized: " + id);
+
+		return idToPlatformLine.get(pid).split("\t");
 	}
 
 	public String[] getConvertedIDs(String[] ids)

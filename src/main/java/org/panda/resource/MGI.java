@@ -144,8 +144,15 @@ public class MGI extends FileServer
 			String[] token = line.split("\t");
 			String sym = token[1];
 			String up = token[6];
-			sym2up.put(sym, up);
-			up2sym.put(up, sym);
+
+			String[] u = up.split(" ");
+
+			sym2up.put(sym, u[0]);
+
+			for (String uID : u)
+			{
+				up2sym.put(uID, sym);
+			}
 		});
 		return true;
 	}

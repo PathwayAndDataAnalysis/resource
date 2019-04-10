@@ -259,6 +259,14 @@ public class GO extends FileServer
 	{
 		if (!goToGene.containsKey(parent)) goToGene.put(parent, new HashSet<>());
 		goToGene.get(parent).addAll(genes);
+
+		if (genes.contains("SCD") && parent.equals("GO:0046390"))
+		{
+			System.out.println();
+		}
+
+
+
 		for (String gene : genes)
 		{
 			geneToGO.get(gene).add(parent);
@@ -291,7 +299,10 @@ public class GO extends FileServer
 
 //		checkInterestTermAssociationRate();
 
-//		get().printAssociatedCommonTerms("CWF19L2");
+		String go = "GO:0046390";
+		System.out.println(go + " = " + get().getNameOfTerm(go));
+
+//		get().printAssociatedCommonTerms("SCD");
 
 //		Set<String> genes1 = get().getGenesOfTerm("GO:0006629");
 //		Set<String> genes2 = get().getGenesOfTerm("GO:0008203");

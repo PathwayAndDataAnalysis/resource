@@ -156,7 +156,7 @@ public class PhosphoSitePlus extends SiteEffectServer
 //		{
 //			printSites(list.get(i));
 //		}
-		psp.printSites("MCL1");
+		psp.printSites("PRKCA");
 //		printUniqueAA();
 
 //		List<Integer> dists = new ArrayList<>();

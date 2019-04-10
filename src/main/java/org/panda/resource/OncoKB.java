@@ -3,6 +3,7 @@ package org.panda.resource;
 import org.panda.utility.ArrayUtil;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -51,7 +52,7 @@ public class OncoKB extends FileServer
 	{
 		data = new HashMap<>();
 
-		getResourceAsStream(getLocalFilenames()[0]).skip(1).map(l -> l.split("\t")).forEach(t ->
+		getResourceAsStream(getLocalFilenames()[0], StandardCharsets.ISO_8859_1).skip(1).map(l -> l.split("\t")).forEach(t ->
 		{
 			if (!data.containsKey(t[0])) data.put(t[0], new HashMap<>());
 

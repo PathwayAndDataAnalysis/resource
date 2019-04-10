@@ -1,6 +1,8 @@
 package org.panda.resource;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -94,6 +96,11 @@ public abstract class FileServer
 	public Stream<String> getResourceAsStream(String filename) throws IOException
 	{
 		return Files.lines(Paths.get(ResourceDirectory.get() + File.separator + filename));
+	}
+
+	public Stream<String> getResourceAsStream(String filename, Charset charset) throws IOException
+	{
+		return Files.lines(Paths.get(ResourceDirectory.get() + File.separator + filename), charset);
 	}
 
 	public BufferedReader getResourceReader(String filename)
