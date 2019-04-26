@@ -1,5 +1,7 @@
-package org.panda.resource;
+package org.panda.resource.autismdatasets;
 
+import org.panda.resource.FileServer;
+import org.panda.resource.HG37;
 import org.panda.utility.ArrayUtil;
 import org.panda.utility.CollectionUtil;
 import org.panda.utility.FileUtil;
@@ -41,7 +43,7 @@ public class DenovoDB extends FileServer
 
 //	private static final Set<String> GOOD_AUTISM_STUDIES = new HashSet<>(Arrays.asList("DeRubeis2014", "Hashimoto2015", "Iossifov", "Krumm", "Turner_2017", "Yuen2016", "Yuen2017"));
 //	private static final Set<String> GOOD_AUTISM_STUDIES = new HashSet<>(Arrays.asList("DeRubeis2014", "Hashimoto2015", "Iossifov", "Krumm"));
-	private static final Set<String> GOOD_AUTISM_STUDIES = new HashSet<>(Arrays.asList( "Turner_2017", "Yuen2017"));
+	private static final Set<String> GOOD_AUTISM_STUDIES = new HashSet<>(Arrays.asList( "An2018", "Yuen2017"));
 	public static final DataFilter SELECT_AUTISM_STUDY = e -> GOOD_AUTISM_STUDIES.contains(e.studyName) &&
 		(!e.studyName.equals("Yuen2017") || get().yuen2017T3SampleNames.contains(e.sampleID));// &&
 //		!get().getYuen2017LowQualitySampleNames().contains(e.sampleID);
@@ -73,7 +75,7 @@ public class DenovoDB extends FileServer
 	public String[] getLocalFilenames()
 	{
 		return new String[]{"denovo-db.non-ssc-samples.variants.tsv", "denovo-db.ssc-samples.variants.tsv",
-			"Yuen2017-T3.csv"};
+			"Yuen2017-T3.csv", "Joon.txt"};
 	}
 
 	@Override
@@ -81,7 +83,7 @@ public class DenovoDB extends FileServer
 	{
 		return new String[]{"http://denovo-db.gs.washington.edu/denovo-db.non-ssc-samples.variants.tsv.gz",
 			"http://denovo-db.gs.washington.edu/denovo-db.ssc-samples.variants.tsv.gz",
-			GITHUB_REPO_BASE + "Yuen2017-T3.csv"};
+			GITHUB_REPO_BASE + "Yuen2017-T3.csv", GITHUB_REPO_BASE + "Joon.txt"};
 	}
 
 	@Override
@@ -91,6 +93,7 @@ public class DenovoDB extends FileServer
 
 		getResourceAsStream(getLocalFilenames()[0]).skip(2).forEach(l -> data.add(new Entry(l)));
 		getResourceAsStream(getLocalFilenames()[1]).skip(2).forEach(l -> data.add(new Entry(l)));
+		getResourceAsStream(getLocalFilenames()[3]).skip(2).forEach(l -> data.add(new Entry(l, true)));
 
 		yuen2017T3SampleNames = FileUtil.getTermsInTabDelimitedColumn(locateInBase(getLocalFilenames()[2]), 0, 2);
 
@@ -215,6 +218,11 @@ public class DenovoDB extends FileServer
 
 		public Entry(String line)
 		{
+			initFromDBLine(line);
+		}
+
+		private void initFromDBLine(String line)
+		{
 			String[] t = line.split("\t");
 			sampleID = t[0];
 			studyName = t[1];
@@ -231,22 +239,56 @@ public class DenovoDB extends FileServer
 			dbsnpBuild = t[12];
 			ancestralAllele = t[13];
 			genome1000Count = Integer.valueOf(t[14]);
-			exacFreq =  Double.valueOf(t[15]);
-			espAaFreq =  Double.valueOf(t[16]);
-			espEaFreq =  Double.valueOf(t[17]);
-			transcript =  t[18];
-			codingDnaSize =  Integer.valueOf(t[19]);
-			gene =  t[20];
-			functionClass =  t[21];
-			cDnaVariant =  t[22];
-			proteinVariant =  t[23];
-			exonIntron =  t[24];
+			exacFreq = Double.valueOf(t[15]);
+			espAaFreq = Double.valueOf(t[16]);
+			espEaFreq = Double.valueOf(t[17]);
+			transcript = t[18];
+			codingDnaSize = Integer.valueOf(t[19]);
+			gene = t[20];
+			functionClass = t[21];
+			cDnaVariant = t[22];
+			proteinVariant = t[23];
+			exonIntron = t[24];
 			polyPhenHDiv = Double.valueOf(t[25]);
 			polyPhenHVar = Double.valueOf(t[26]);
 			siftScore = Double.valueOf(t[27]);
 			caddScore = Double.valueOf(t[28]);
 			lofScore = Double.valueOf(t[29]);
 			lrtScore = Double.valueOf(t[30]);
+		}
+
+		private final static String JOON_STUDY_NAME = "An2018";
+		private final static String JOON_PMID = "30545852";
+		private final static int JOON_PROBANDS = 1902;
+		private final static String JOON_SEQ_TYPE = "genome";
+		private final static String JOON_AUTISM = "autism";
+		private final static String JOON_CONTROL = "control";
+		private final static String JOON_VALIDATION = "unknown";
+
+		public Entry(String line, boolean fromJoon)
+		{
+			if (!fromJoon)
+			{
+				initFromDBLine(line);
+				return;
+			}
+
+			String[] t = line.split("\t");
+			sampleID = t[7];
+			this.studyName = JOON_STUDY_NAME;
+			pubmedID = JOON_PMID;
+			numProbands = JOON_PROBANDS;
+			numControls = JOON_PROBANDS;
+			sequenceType = JOON_SEQ_TYPE;
+			primaryPhenotype = t[6].equals("case") ? JOON_AUTISM : JOON_CONTROL;
+			validation = JOON_VALIDATION;
+			chr = t[0].substring(3);
+			position = Integer.valueOf(t[1]);
+			variant = t[2] + ">" + t[3];
+			transcript =  t[10].equals(".") ? "" : t[10];
+			gene =  t[9].equals(".") ? "" : t[9];
+			functionClass =  t[8];
+			proteinVariant =  "";
 		}
 
 		public String key()
@@ -263,27 +305,42 @@ public class DenovoDB extends FileServer
 	public enum DataFilterEnum implements DataFilter
 	{
 		HAS_GENE(e -> !e.gene.equals("NA") && !e.gene.isEmpty()),
-		INTRON(e -> HAS_GENE.select(e) && e.functionClass.equals("intron")),
-		HAS_GENE_BUT_NOT_INTRON(e -> HAS_GENE.select(e) && !e.functionClass.equals("intron")),
+		INTRON(e -> HAS_GENE.select(e) && e.functionClass.contains("intron")),
+		HAS_GENE_BUT_NOT_INTRON(e -> HAS_GENE.select(e) && !e.functionClass.contains("intron")),
 
-		YUEN(e -> e.studyName.equals("Yuen2017") && DenovoDB.get().yuen2017T3SampleNames.contains(e.sampleID)),
+		MSSNG(e -> e.studyName.equals("Yuen2017") && DenovoDB.get().yuen2017T3SampleNames.contains(e.sampleID)),
 		TURNER(e -> e.studyName.equals("Turner_2017")),
+		SSC(e -> e.studyName.equals("An2018")),
 
 		AUTISM(e -> e.primaryPhenotype.equals("autism")),
 		CONTROL(e -> e.primaryPhenotype.equals("control")),
 
-		YUEN_TURNER_AUTISM(e -> HAS_GENE.select(e) && (YUEN.select(e) || TURNER.select(e)) && AUTISM.select(e)),
-		YUEN_TURNER_CONTROL(e -> HAS_GENE.select(e) && (YUEN.select(e) || TURNER.select(e)) && CONTROL.select(e)),
-		YUEN_AUTISM_TURNER_CONTROL(e -> HAS_GENE.select(e) && ((YUEN.select(e) && AUTISM.select(e))  || (TURNER.select(e) && CONTROL.select(e)))),
-
-		YUEN_AUTISM(e -> HAS_GENE.select(e) && YUEN.select(e) && AUTISM.select(e)),
+		MSSNG_AUTISM(e -> HAS_GENE.select(e) && MSSNG.select(e) && AUTISM.select(e)),
 		TURNER_AUTISM(e -> HAS_GENE.select(e) && TURNER.select(e) && AUTISM.select(e)),
+		SSC_AUTISM(e -> HAS_GENE.select(e) && SSC.select(e) && AUTISM.select(e)),
 
-		YUEN_TURNER_AUTISM_INTRON(e -> INTRON.select(e) && (YUEN.select(e) || TURNER.select(e)) && AUTISM.select(e)),
-		YUEN_TURNER_CONTROL_INTRON(e -> INTRON.select(e) && (YUEN.select(e) || TURNER.select(e)) && CONTROL.select(e)),
+		MSSNG_HAS_GENE(e -> HAS_GENE.select(e) && MSSNG.select(e)),
+		SSC_HAS_GENE(e -> HAS_GENE.select(e) && SSC.select(e)),
 
-		YUEN_TURNER_AUTISM_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (YUEN.select(e) || TURNER.select(e)) && AUTISM.select(e)),
-		YUEN_TURNER_CONTROL_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (YUEN.select(e) || TURNER.select(e)) && CONTROL.select(e)),
+		YUEN_TURNER_AUTISM(e -> HAS_GENE.select(e) && (MSSNG.select(e) || TURNER.select(e)) && AUTISM.select(e)),
+		YUEN_TURNER_CONTROL(e -> HAS_GENE.select(e) && (MSSNG.select(e) || TURNER.select(e)) && CONTROL.select(e)),
+		YUEN_AUTISM_TURNER_CONTROL(e -> HAS_GENE.select(e) && ((MSSNG.select(e) && AUTISM.select(e))  || (TURNER.select(e) && CONTROL.select(e)))),
+
+		MSSNG_SSC_AUTISM(e -> HAS_GENE.select(e) && (MSSNG.select(e) || SSC.select(e)) && AUTISM.select(e)),
+		MSSNG_SSC_CONTROL(e -> HAS_GENE.select(e) && (MSSNG.select(e) || SSC.select(e)) && CONTROL.select(e)),
+		MSSNG_AUTISM_SSC_CONTROL(e -> HAS_GENE.select(e) && ((MSSNG.select(e) && AUTISM.select(e))  || (SSC.select(e) && CONTROL.select(e)))),
+
+		YUEN_TURNER_AUTISM_INTRON(e -> INTRON.select(e) && (MSSNG.select(e) || TURNER.select(e)) && AUTISM.select(e)),
+		YUEN_TURNER_CONTROL_INTRON(e -> INTRON.select(e) && (MSSNG.select(e) || TURNER.select(e)) && CONTROL.select(e)),
+
+		MSSNG_SSC_AUTISM_INTRON(e -> INTRON.select(e) && (MSSNG.select(e) || SSC.select(e)) && AUTISM.select(e)),
+		MSSNG_SSC_CONTROL_INTRON(e -> INTRON.select(e) && (MSSNG.select(e) || SSC.select(e)) && CONTROL.select(e)),
+
+		YUEN_TURNER_AUTISM_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (MSSNG.select(e) || TURNER.select(e)) && AUTISM.select(e)),
+		YUEN_TURNER_CONTROL_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (MSSNG.select(e) || TURNER.select(e)) && CONTROL.select(e)),
+
+		MSSNG_SSC_AUTISM_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (MSSNG.select(e) || SSC.select(e)) && AUTISM.select(e)),
+		MSSNG_SSC_CONTROL_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (MSSNG.select(e) || SSC.select(e)) && CONTROL.select(e)),
 		;
 
 		DataFilter filter;
@@ -436,22 +493,19 @@ public class DenovoDB extends FileServer
 
 	private static void printGenesPerSamplePerStudy()
 	{
-		for (String study : GOOD_AUTISM_STUDIES)
+		DataFilter[] filters = new DataFilter[]{DataFilterEnum.MSSNG_HAS_GENE, DataFilterEnum.SSC_HAS_GENE};
+		for (DataFilter filter : filters)
 		{
-			Map<String, List<Entry>> map = get().getDataStream(e -> e.studyName.equals(study) &&
-//				e.primaryPhenotype.equals("autism") &&
-				(!e.studyName.equals("Yuen2017") || get().yuen2017T3SampleNames.contains(e.sampleID)) &&
-				SELECT_MUT.select(e))
-				.collect(Collectors.groupingBy(e -> e.sampleID));
+			Map<String, List<Entry>> map = get().getDataStream(filter).collect(Collectors.groupingBy(e -> e.sampleID));
 
 			Map<String, Long> counts = map.keySet().stream().collect(Collectors.toMap(Function.identity(),
 				id -> map.get(id).stream().map(e -> e.gene).distinct().count()));
 
-			Histogram h = new Histogram(1);
+			Histogram h = new Histogram(5);
 			h.setBorderAtZero(true);
 			h.setUseLowerBorderForPrinting(true);
 			counts.values().forEach(h::count);
-			System.out.println("\nstudy = " + study);
+			System.out.println("\nfilter = " + filter);
 			h.print();
 		}
 	}

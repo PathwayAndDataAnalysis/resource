@@ -1,7 +1,10 @@
-package org.panda.resource;
+package org.panda.resource.autismdatasets;
+
+import org.panda.resource.CancerGeneCensus;
+import org.panda.resource.FileServer;
+import org.panda.resource.OncoKB;
 
 import java.io.IOException;
-import java.sql.SQLOutput;
 import java.util.*;
 import java.util.stream.Collectors;
 

@@ -1,7 +1,6 @@
 package org.panda.resource.autismdatasets;
 
 import org.panda.resource.FileServer;
-import org.panda.resource.SFARI;
 import org.panda.utility.AltMatrixUtil;
 import org.panda.utility.statistics.Histogram;
 
