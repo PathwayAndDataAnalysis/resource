@@ -166,10 +166,13 @@ public class ReactomePathway extends FileServer
 
 	public static void main(String[] args) throws IOException
 	{
-		Set<String> set1 = get().getGenes("http://identifiers.org/reactome/R-HSA-2219530");
-		Set<String> set2 = get().getGenes("http://identifiers.org/reactome/R-HSA-1257604");
-		Set<String> set3 = get().getGenes("http://identifiers.org/reactome/R-HSA-400253");
+//		Set<String> set1 = get().getGenes("http://identifiers.org/reactome/R-HSA-2219530");
+//		Set<String> set2 = get().getGenes("http://identifiers.org/reactome/R-HSA-1257604");
+//		Set<String> set3 = get().getGenes("http://identifiers.org/reactome/R-HSA-400253");
+//
+//		CollectionUtil.printVennSets(set1, set2, set3);
 
-		CollectionUtil.printVennSets(set1, set2, set3);
+		Map<String, Set<String>> allPathways = get().getAllPathways();
+		System.out.println("allPathways.size() = " + allPathways.size());
 	}
 }

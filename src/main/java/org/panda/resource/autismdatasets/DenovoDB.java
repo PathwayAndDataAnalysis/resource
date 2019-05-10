@@ -38,6 +38,7 @@ public class DenovoDB extends FileServer
 	private Set<String> yuenAnCommonGenes;
 	private Set<String> yuenTurnerCommonGenes;
 	private Set<String> yuenTurnerAnCommonGenes;
+	private Set<String> turnerAnCommonGenes;
 	private Set<String> turnerSamples;
 
 	public static final DataFilter SELECT_MUT = e -> !e.gene.equals("NA") && !e.gene.isEmpty();
@@ -99,31 +100,27 @@ public class DenovoDB extends FileServer
 		getResourceAsStream(getLocalFilenames()[1]).skip(2).forEach(l -> data.add(new Entry(l)));
 		getResourceAsStream(getLocalFilenames()[3]).skip(2).forEach(l -> data.add(new Entry(l, true)));
 
-		System.out.println("data.size() = " + data.size());
-
 		yuen2017T3SampleNames = FileUtil.getTermsInTabDelimitedColumn(locateInBase(getLocalFilenames()[2]), 0, 2);
 
 		DataFilter mssng_has_gene_filter = e -> e.studyName.equals("Yuen2017") && yuen2017T3SampleNames.contains(e.sampleID) && !e.gene.equals("NA") && !e.gene.isEmpty();
 		yuenAnCommonGenes = CollectionUtil.getIntersection(
 			getDataStream(mssng_has_gene_filter).map(e -> e.gene).collect(Collectors.toSet()),
-			getDataStream(DataFilterEnum.SSC_HAS_GENE).map(e -> e.gene).collect(Collectors.toSet()));
+			getDataStream(DataFilterEnum.AN_HAS_GENE).map(e -> e.gene).collect(Collectors.toSet()));
+
+		turnerAnCommonGenes = CollectionUtil.getIntersection(
+			getDataStream(DataFilterEnum.TURNER_HAS_GENE).map(e -> e.gene).collect(Collectors.toSet()),
+			getDataStream(DataFilterEnum.AN_HAS_GENE).map(e -> e.gene).collect(Collectors.toSet()));
 
 		yuenTurnerCommonGenes = CollectionUtil.getIntersection(
 			getDataStream(mssng_has_gene_filter).map(e -> e.gene).collect(Collectors.toSet()),
 			getDataStream(DataFilterEnum.TURNER_HAS_GENE).map(e -> e.gene).collect(Collectors.toSet()));
 
-		System.out.println("yuenAnCommonGenes = " + yuenAnCommonGenes.size());
-
 		yuenTurnerAnCommonGenes = CollectionUtil.getIntersection(
 			getDataStream(mssng_has_gene_filter).map(e -> e.gene).collect(Collectors.toSet()),
 			getDataStream(DataFilterEnum.TURNER_HAS_GENE).map(e -> e.gene).collect(Collectors.toSet()),
-			getDataStream(DataFilterEnum.SSC_HAS_GENE).map(e -> e.gene).collect(Collectors.toSet()));
-
-		System.out.println("yuenTurnerAnCommonGenes = " + yuenTurnerAnCommonGenes.size());
+			getDataStream(DataFilterEnum.AN_HAS_GENE).map(e -> e.gene).collect(Collectors.toSet()));
 
 		turnerSamples = getDataStream(DataFilterEnum.TURNER).map(e -> e.sampleID).collect(Collectors.toSet());
-
-		System.out.println("turnerSamples = " + turnerSamples.size());
 
 		populatePairedControls();
 		return true;
@@ -336,47 +333,55 @@ public class DenovoDB extends FileServer
 		INTRON(e -> HAS_GENE.select(e) && e.functionClass.contains("intron")),
 		HAS_GENE_BUT_NOT_INTRON(e -> HAS_GENE.select(e) && !e.functionClass.contains("intron")),
 
-		MSSNG(e -> e.studyName.equals("Yuen2017") && DenovoDB.get().yuen2017T3SampleNames.contains(e.sampleID)),
+		YUEN(e -> e.studyName.equals("Yuen2017") && DenovoDB.get().yuen2017T3SampleNames.contains(e.sampleID)),
 		TURNER(e -> e.studyName.equals("Turner_2017")),
-		SSC(e -> e.studyName.equals("An2018")),
-		SSC_DIF(e -> e.studyName.equals("An2018") && !DenovoDB.get().turnerSamples.contains(e.sampleID)),
+		TURNER_REDO(e -> e.studyName.equals("An2018") && DenovoDB.get().turnerSamples.contains(e.sampleID)),
+		AN(e -> e.studyName.equals("An2018")),
+		AN_DIF(e -> e.studyName.equals("An2018") && !DenovoDB.get().turnerSamples.contains(e.sampleID)),
 
 		AUTISM(e -> e.primaryPhenotype.equals("autism")),
 		CONTROL(e -> e.primaryPhenotype.equals("control")),
 
-		MSSNG_AUTISM(e -> HAS_GENE.select(e) && MSSNG.select(e) && AUTISM.select(e)),
+		YUEN_AUTISM(e -> HAS_GENE.select(e) && YUEN.select(e) && AUTISM.select(e)),
 		TURNER_AUTISM(e -> HAS_GENE.select(e) && TURNER.select(e) && AUTISM.select(e)),
-		SSC_AUTISM(e -> HAS_GENE.select(e) && SSC.select(e) && AUTISM.select(e)),
-		SSC_DIF_AUTISM(e -> HAS_GENE.select(e) && SSC_DIF.select(e) && AUTISM.select(e)),
+		TURNER_REDO_AUTISM(e -> HAS_GENE.select(e) && TURNER_REDO.select(e) && AUTISM.select(e)),
+		AN_AUTISM(e -> HAS_GENE.select(e) && AN.select(e) && AUTISM.select(e)),
+		AN_CONTROL(e -> HAS_GENE.select(e) && AN.select(e) && CONTROL.select(e)),
+		AN_DIF_AUTISM(e -> HAS_GENE.select(e) && AN_DIF.select(e) && AUTISM.select(e)),
 
-		MSSNG_HAS_GENE(e -> HAS_GENE.select(e) && MSSNG.select(e)),
+		YUEN_HAS_GENE(e -> HAS_GENE.select(e) && YUEN.select(e)),
 		TURNER_HAS_GENE(e -> HAS_GENE.select(e) && TURNER.select(e)),
-		SSC_HAS_GENE(e -> HAS_GENE.select(e) && SSC.select(e)),
+		AN_HAS_GENE(e -> HAS_GENE.select(e) && AN.select(e)),
 
-		YUEN_TURNER_AUTISM(e -> HAS_GENE.select(e) && (MSSNG.select(e) || TURNER.select(e)) && AUTISM.select(e)),
-		YUEN_TURNER_CONTROL(e -> HAS_GENE.select(e) && (MSSNG.select(e) || TURNER.select(e)) && CONTROL.select(e)),
-		YUEN_AUTISM_TURNER_CONTROL(e -> HAS_GENE.select(e) && ((MSSNG.select(e) && AUTISM.select(e))  || (TURNER.select(e) && CONTROL.select(e)))),
+		YUEN_TURNER_CONTROL(e -> HAS_GENE.select(e) && (YUEN.select(e) || TURNER.select(e)) && CONTROL.select(e)),
+		YUEN_AUTISM_TURNER_CONTROL(e -> HAS_GENE.select(e) && ((YUEN.select(e) && AUTISM.select(e))  || (TURNER.select(e) && CONTROL.select(e)))),
 
-		MSSNG_SSC_AUTISM(e -> HAS_GENE.select(e) && (MSSNG.select(e) || SSC.select(e)) && AUTISM.select(e)),
-		MSSNG_TURNER_SSC_AUTISM(e -> HAS_GENE.select(e) && (MSSNG.select(e) || TURNER.select(e) || SSC_DIF.select(e)) && AUTISM.select(e)),
-		MSSNG_TURNER_AUTISM(e -> HAS_GENE.select(e) && (MSSNG.select(e) || TURNER.select(e)) && AUTISM.select(e)),
-		MSSNG_SSC_AUTISM_WITH_COMMON_GENES(e -> MSSNG_SSC_AUTISM.select(e) && DenovoDB.get().yuenAnCommonGenes.contains(e.gene)),
-		MSSNG_TURNER_SSC_AUTISM_WITH_COMMON_GENES(e -> MSSNG_TURNER_SSC_AUTISM.select(e) && DenovoDB.get().yuenTurnerAnCommonGenes.contains(e.gene)),
-		MSSNG_TURNER_AUTISM_WITH_COMMON_GENES(e -> MSSNG_TURNER_AUTISM.select(e) && DenovoDB.get().yuenTurnerCommonGenes.contains(e.gene)),
-		MSSNG_SSC_CONTROL(e -> HAS_GENE.select(e) && (MSSNG.select(e) || SSC.select(e)) && CONTROL.select(e)),
-		MSSNG_AUTISM_SSC_CONTROL(e -> HAS_GENE.select(e) && ((MSSNG.select(e) && AUTISM.select(e))  || (SSC.select(e) && CONTROL.select(e)))),
+		YUEN_AN_AUTISM(e -> HAS_GENE.select(e) && (YUEN.select(e) || AN.select(e)) && AUTISM.select(e)),
+		YUEN_AN(e -> HAS_GENE.select(e) && (YUEN.select(e) || AN.select(e))),
+		YUEN_TURNER_AUTISM(e -> HAS_GENE.select(e) && (YUEN.select(e) || TURNER.select(e)) && AUTISM.select(e)),
+		YUEN_TURNER_REDO_AUTISM(e -> HAS_GENE.select(e) && (YUEN.select(e) || TURNER_REDO.select(e)) && AUTISM.select(e)),
+		YUEN_TURNER_AN_AUTISM(e -> HAS_GENE.select(e) && (YUEN.select(e) || TURNER.select(e) || AN_DIF.select(e)) && AUTISM.select(e)),
+		YUEN_TURNER_AN_AUTISM_INTRON(e -> INTRON.select(e) && YUEN_TURNER_AN_AUTISM.select(e)),
+		YUEN_TURNER_AN_AUTISM_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && YUEN_TURNER_AN_AUTISM.select(e)),
+		YUEN_AN_AUTISM_WITH_COMMON_GENES(e -> YUEN_AN_AUTISM.select(e) && DenovoDB.get().yuenAnCommonGenes.contains(e.gene)),
+		YUEN_TURNER_AN_AUTISM_WITH_COMMON_GENES(e -> YUEN_TURNER_AN_AUTISM.select(e) && DenovoDB.get().yuenTurnerAnCommonGenes.contains(e.gene)),
+		YUEN_TURNER_AUTISM_WITH_COMMON_GENES(e -> YUEN_TURNER_AUTISM.select(e) && DenovoDB.get().yuenTurnerCommonGenes.contains(e.gene)),
+		YUEN_AN_CONTROL(e -> HAS_GENE.select(e) && (YUEN.select(e) || AN.select(e)) && CONTROL.select(e)),
+		YUEN_AUTISM_AN_CONTROL(e -> HAS_GENE.select(e) && ((YUEN.select(e) && AUTISM.select(e))  || (AN.select(e) && CONTROL.select(e)))),
+		TURNER_AN_AUTISM(e -> HAS_GENE.select(e) && (AN_DIF.select(e) || TURNER.select(e)) && AUTISM.select(e)),
+		TURNER_AN_AUTISM_WITH_COMMON_GENES(e -> TURNER_AN_AUTISM.select(e) && DenovoDB.get().turnerAnCommonGenes.contains(e.gene)),
 
-		YUEN_TURNER_AUTISM_INTRON(e -> INTRON.select(e) && (MSSNG.select(e) || TURNER.select(e)) && AUTISM.select(e)),
-		YUEN_TURNER_CONTROL_INTRON(e -> INTRON.select(e) && (MSSNG.select(e) || TURNER.select(e)) && CONTROL.select(e)),
+		YUEN_TURNER_AUTISM_INTRON(e -> INTRON.select(e) && (YUEN.select(e) || TURNER.select(e)) && AUTISM.select(e)),
+		YUEN_TURNER_CONTROL_INTRON(e -> INTRON.select(e) && (YUEN.select(e) || TURNER.select(e)) && CONTROL.select(e)),
 
-		MSSNG_SSC_AUTISM_INTRON(e -> INTRON.select(e) && (MSSNG.select(e) || SSC.select(e)) && AUTISM.select(e)),
-		MSSNG_SSC_CONTROL_INTRON(e -> INTRON.select(e) && (MSSNG.select(e) || SSC.select(e)) && CONTROL.select(e)),
+		YUEN_AN_AUTISM_INTRON(e -> INTRON.select(e) && (YUEN.select(e) || AN.select(e)) && AUTISM.select(e)),
+		YUEN_AN_CONTROL_INTRON(e -> INTRON.select(e) && (YUEN.select(e) || AN.select(e)) && CONTROL.select(e)),
 
-		YUEN_TURNER_AUTISM_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (MSSNG.select(e) || TURNER.select(e)) && AUTISM.select(e)),
-		YUEN_TURNER_CONTROL_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (MSSNG.select(e) || TURNER.select(e)) && CONTROL.select(e)),
+		YUEN_TURNER_AUTISM_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (YUEN.select(e) || TURNER.select(e)) && AUTISM.select(e)),
+		YUEN_TURNER_CONTROL_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (YUEN.select(e) || TURNER.select(e)) && CONTROL.select(e)),
 
-		MSSNG_SSC_AUTISM_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (MSSNG.select(e) || SSC.select(e)) && AUTISM.select(e)),
-		MSSNG_SSC_CONTROL_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (MSSNG.select(e) || SSC.select(e)) && CONTROL.select(e)),
+		YUEN_AN_AUTISM_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (YUEN.select(e) || AN.select(e)) && AUTISM.select(e)),
+		YUEN_AN_CONTROL_NOT_INTRON(e -> HAS_GENE_BUT_NOT_INTRON.select(e) && (YUEN.select(e) || AN.select(e)) && CONTROL.select(e)),
 		;
 
 		DataFilter filter;
@@ -529,7 +534,7 @@ public class DenovoDB extends FileServer
 
 	private static void printGenesPerSamplePerStudy()
 	{
-		DataFilter[] filters = new DataFilter[]{DataFilterEnum.MSSNG_HAS_GENE, DataFilterEnum.SSC_HAS_GENE};
+		DataFilter[] filters = new DataFilter[]{DataFilterEnum.YUEN_HAS_GENE, DataFilterEnum.AN_HAS_GENE};
 		for (DataFilter filter : filters)
 		{
 			Map<String, List<Entry>> map = get().getDataStream(filter).collect(Collectors.groupingBy(e -> e.sampleID));
