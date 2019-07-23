@@ -411,11 +411,14 @@ public class DenovoDB extends FileServer
 //		printSampleOverlaps();
 //		printMutationOverlapInCommonSamples("Iossifov", "Krumm");
 //		printRowsPerSamplePerStudy();
-		printGenesPerSamplePerStudy();
+//		printGenesPerSamplePerStudy();
 //		printMutationClassCounts();
 //		recordMutationNonUniformity();
 //		printMutationUniformityAroundAGene();
 //		plotHotspotsForAGene();
+
+		printStudiesContent();
+
 //		temp();
 	}
 
@@ -680,30 +683,35 @@ public class DenovoDB extends FileServer
 		return list;
 	}
 
+	private static void printStudiesContent()
+	{
+		DataFilter genOrEx = e -> e.sequenceType.equals("genome") ||e.sequenceType.equals("exome");
+			Set<String> focus = new HashSet<>(Arrays.asList("autism", "bipolar_type1", "bipolar_type2", "schizophrenia"));
+		Set<String> studies = get().getDataStream(e -> focus.contains(e.primaryPhenotype) && genOrEx.select(e)).map(e -> e.studyName).collect(Collectors.toSet());
+		Map<String, Map<String, Set<String>>> phenCounts = new HashMap<>();
+		Map<String, String> pubmedMap = new HashMap<>();
+		Map<String, String> seqTypeMap = new HashMap<>();
+		get().getDataStream(e -> studies.contains(e.studyName) && genOrEx.select(e)).forEach(e ->
+		{
+			if (!phenCounts.containsKey(e.studyName)) phenCounts.put(e.studyName, new HashMap<>());
+			if (!phenCounts.get(e.studyName).containsKey(e.primaryPhenotype)) phenCounts.get(e.studyName).put(e.primaryPhenotype, new HashSet<>());
+			phenCounts.get(e.studyName).get(e.primaryPhenotype).add(e.sampleID);
+			pubmedMap.put(e.studyName, e.pubmedID);
+			seqTypeMap.put(e.studyName, e.sequenceType);
+		});
+
+
+		phenCounts.forEach((study, map) ->
+		{
+			System.out.println("\n" + study + ", " + pubmedMap.get(study) + ", " + seqTypeMap.get(study));
+			for (String phen : map.keySet())
+			{
+				System.out.println(phen + " = " + map.get(phen).size());
+			}
+		});
+	}
+
 	private static void temp()
 	{
-		String gene = "TP53";
-		Integer min = get().getDataStream(e -> e.gene.equals(gene)).map(e -> e.position).min(Integer::compareTo).get();
-		Integer max = get().getDataStream(e -> e.gene.equals(gene)).map(e -> e.position).max(Integer::compareTo).get();
-
-		System.out.println("min = " + min);
-		System.out.println("max = " + max);
-
-		System.out.println("max-min = " + (max - min));
 	}
-
-	private static void temp2()
-	{
-		Set<String> set1 = get().getDataStream(e -> e.studyName.equals("Yuen2017") /*&& e.primaryPhenotype.equals("autism")*/).map(e -> e.sampleID).collect(Collectors.toSet());
-		Set<String> set4 = get().getDataStream(e -> e.studyName.equals("Yuen2016") /*&& e.primaryPhenotype.equals("autism")*/).map(e -> e.sampleID).collect(Collectors.toSet());
-		Set<String> setY7T3 = FileUtil.getTermsInTabDelimitedColumn("/home/ozgun/Documents/Grants/Mental/Yuen2017-T3.csv", 0, 2);
-		Set<String> setY7T4 = FileUtil.getTermsInTabDelimitedColumn("/home/ozgun/Documents/Grants/Mental/Yuen2017-T4.csv", 0, 2);
-		Set<String> setY7T5 = FileUtil.getTermsInTabDelimitedColumn("/home/ozgun/Documents/Grants/Mental/Yuen2017-T5.csv", 0, 2);
-		Set<String> set3 = FileUtil.getTermsInTabDelimitedColumn("/home/ozgun/Documents/Grants/Mental/Yuen2016-1.csv", 0, 2);
-		set3.addAll(FileUtil.getTermsInTabDelimitedColumn("/home/ozgun/Documents/Grants/Mental/Yuen2016-1.csv", 0, 2));
-
-		CollectionUtil.printVennSets(35, setY7T3, setY7T4, setY7T5);
-
-	}
-
 }

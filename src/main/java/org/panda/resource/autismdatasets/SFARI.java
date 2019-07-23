@@ -177,7 +177,7 @@ public class SFARI extends FileServer
 			Set<String> synd = genes.stream().filter(g -> SFARI.get().isSyndromic(g)).collect(Collectors.toSet());
 			genes.removeAll(synd);
 			System.out.println(i + "\t" + genes.size() + "\t" + synd.size());
-			System.out.println(synd.stream().filter(cancer::contains).sorted().collect(Collectors.toList()) + "\t" + genes.stream().filter(cancer::contains).sorted().collect(Collectors.toList()));
+//			System.out.println(synd.stream().filter(cancer::contains).sorted().collect(Collectors.toList()) + "\t" + genes.stream().filter(cancer::contains).sorted().collect(Collectors.toList()));
 		}
 
 		System.out.println("All genes in SFARI = " + SFARI.get().getAllGenes().size());
