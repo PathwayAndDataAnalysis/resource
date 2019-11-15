@@ -1,5 +1,6 @@
 package org.panda.resource;
 
+import org.panda.utility.TermCounter;
 import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
 import org.panda.utility.graph.UndirectedGraph;
@@ -87,6 +88,33 @@ public class UniProtSequence extends FileServer
 		return null;
 	}
 
+	public String getSeqAround(String nameOrID, int loc, int width)
+	{
+		if (loc < 1) throw new IllegalArgumentException("Location cannot be smaller than 1. loc = " + loc);
+		if (width % 2 != 1) throw new IllegalArgumentException("Sequence width has to be an odd number. widht = " + width);
+		if (loc <= width / 2) throw new IllegalArgumentException("The location has to be greater than width/2. width = " + width + ", loc = " + loc);
+
+		String id = nameToID.get(nameOrID);
+
+		if (id == null && idToSeq.containsKey(nameOrID))
+		{
+			id = nameOrID;
+		}
+
+		if (id != null)
+		{
+			String seq = idToSeq.get(id);
+			assert seq != null;
+
+			int halfW = width / 2;
+			if (loc <= seq.length() - halfW)
+			{
+				return seq.substring(loc - halfW - 1, loc + halfW);
+			}
+		}
+		return null;
+	}
+
 	public String getIDOfName(String uniprotName)
 	{
 		return nameToID.get(uniprotName);
@@ -139,7 +167,25 @@ public class UniProtSequence extends FileServer
 
 	public static void main(String[] args)
 	{
-		int startLocation = get().getStartLocation("P62158", "vFDk".toUpperCase());
-		System.out.println("startLocation = " + startLocation);
+//		int startLocation = get().getStartLocation("P0DP23", "vFDk".toUpperCase());
+//		System.out.println("startLocation = " + startLocation);
+
+//		System.out.println(get().getSeqAround("P0DP23", 80, 5));
+
+		countAAs();
+	}
+
+	private static void countAAs()
+	{
+		TermCounter tc = new TermCounter();
+		get().idToSeq.values().stream().forEach(s ->
+		{
+			for (int i = 0; i < s.length(); i++)
+			{
+				String aa = s.substring(i, i + 1);
+				tc.addTerm(aa);
+			}
+		});
+		tc.print();
 	}
 }

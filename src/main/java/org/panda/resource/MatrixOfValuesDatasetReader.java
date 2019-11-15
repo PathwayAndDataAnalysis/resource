@@ -63,7 +63,7 @@ public class MatrixOfValuesDatasetReader
 
 				for (int i = 1; i < header.length; i++)
 				{
-					Double val = Double.parseDouble(t[i]);
+					Double val = t[i].equals("NA") ? Double.NaN : Double.parseDouble(t[i]);
 
 					if (logTransform) val = Math.log1p(val) / LOG2;
 
