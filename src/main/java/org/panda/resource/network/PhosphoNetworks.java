@@ -40,7 +40,7 @@ public class PhosphoNetworks extends FileServer
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{"http://phosphonetworks.org/download/highResolutionNetwork.csv"};
+		return new String[]{"https://phosphonetworks.org/download/highResolutionNetwork.csv"};
 	}
 
 	@Override
