@@ -3,6 +3,7 @@ package org.panda.resource.siteeffect;
 import org.panda.resource.HGNC;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -84,7 +85,7 @@ public class PhosphoSitePlus extends SiteEffectServer
 			actualMap.get(gene).put(site, "manual curation");
 		});
 
-		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0]))/*, Charset.forName("windows-31j")*/).skip(4)
+		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0])), Charset.forName("windows-31j")).skip(4)
 			.map(line -> line.split("\t"))
 			.filter(token -> token.length >= 13 && token[6].equals("human") &&
 				token[8].equals("PHOSPHORYLATION") && HGNC.get().getSymbol(token[4]) != null)

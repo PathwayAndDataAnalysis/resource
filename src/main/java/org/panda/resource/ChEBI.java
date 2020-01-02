@@ -1,5 +1,7 @@
 package org.panda.resource;
 
+import org.panda.utility.FileUtil;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -86,7 +88,8 @@ public class ChEBI extends FileServer
 //			System.out.println(s + "\t" + get().getName(s));
 //		}
 
-		replaceIDsWithNameInSIF("/home/babur/Documents/Analyses/MrOS/links-between-metabolites-and-proteins.sif");
+//		replaceIDsWithNameInSIF("/home/babur/Documents/Analyses/MrOS/links-between-metabolites-and-proteins.sif");
+		get().dumpData("C:\\Users\\Owner\\Projects\\ChEBI.txt");
 	}
 
 	private static void replaceIDsWithNameInSIF(String filename) throws IOException
@@ -109,6 +112,14 @@ public class ChEBI extends FileServer
 		{
 			writer.write(line + "\n");
 		}
+		writer.close();
+	}
+
+	private void dumpData(String filename) throws IOException
+	{
+		BufferedWriter writer = Files.newBufferedWriter(Paths.get(filename));
+		writer.write("ID\tName");
+		idToName.keySet().stream().sorted().forEach(id -> FileUtil.lnwrite(id + "\t" + idToName.get(id), writer));
 		writer.close();
 	}
 }
