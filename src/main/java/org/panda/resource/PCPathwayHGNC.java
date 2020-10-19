@@ -26,7 +26,7 @@ public class PCPathwayHGNC extends FileServer
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{"http://www.pathwaycommons.org/archives/PC2/v9/PathwayCommons9.All.hgnc.gmt.gz"};
+		return new String[]{"https://www.pathwaycommons.org/archives/PC2/v11/PathwayCommons11.All.hgnc.gmt.gz"};
 	}
 
 	@Override

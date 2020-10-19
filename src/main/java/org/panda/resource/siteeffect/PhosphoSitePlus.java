@@ -70,21 +70,6 @@ public class PhosphoSitePlus extends SiteEffectServer
 		typeMap = new HashMap<>();
 		actualMap = new HashMap<>();
 
-		Files.lines(Paths.get(locateInBase(getLocalFilenames()[1]))).filter(l -> !l.startsWith("#"))
-			.map(line -> line.split("\\s+")).filter(token -> token.length > 2).forEach(token ->
-		{
-			String gene = token[0];
-
-			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
-			if (!actualMap.containsKey(gene)) actualMap.put(gene, new HashMap<>());
-
-			String site = token[1];
-			int sign = Integer.parseInt(token[2]);
-
-			typeMap.get(gene).put(site, sign);
-			actualMap.get(gene).put(site, "manual curation");
-		});
-
 		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0])))//, Charset.forName("windows-31j")).skip(4)
 			.map(line -> line.split("\t"))
 			.filter(token -> token.length >= 13 && token[6].equals("human") &&
@@ -135,6 +120,21 @@ public class PhosphoSitePlus extends SiteEffectServer
 				}
 		});
 
+		Files.lines(Paths.get(locateInBase(getLocalFilenames()[1]))).filter(l -> !l.startsWith("#"))
+			.map(line -> line.split("\\s+")).filter(token -> token.length > 2).forEach(token ->
+		{
+			String gene = token[0];
+
+			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
+			if (!actualMap.containsKey(gene)) actualMap.put(gene, new HashMap<>());
+
+			String site = token[1];
+			int sign = Integer.parseInt(token[2]);
+
+			typeMap.get(gene).put(site, sign);
+			actualMap.get(gene).put(site, "manual curation");
+		});
+
 		return true;
 	}
 
@@ -157,7 +157,7 @@ public class PhosphoSitePlus extends SiteEffectServer
 //		{
 //			printSites(list.get(i));
 //		}
-		psp.printSites("PRKCA");
+		psp.printSites("AKT3");
 //		printUniqueAA();
 
 //		List<Integer> dists = new ArrayList<>();

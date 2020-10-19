@@ -69,7 +69,9 @@ public class SiteEffectCollective
 
 	public static void main(String[] args) throws IOException
 	{
-		writeToFile();
+		SiteEffectCollective sec = new SiteEffectCollective();
+		System.out.println(sec.getEffect("SMAD3", "T8"));
+//		writeToFile();
 	}
 
 	public static void writeToFile() throws IOException

@@ -113,11 +113,12 @@ public abstract class SiteEffectServer extends FileServer
 	{
 		for (ProteomicsFileRow data : datas)
 		{
-			if (data.effect != null) continue;
+			if (data.effect != null && data.effect != ProteomicsFileRow.SiteEffect.COMPLEX) continue;
 			if (data.sites == null || data.sites.isEmpty()) continue;
 
 			Set<Integer> found = getEffects(data, proximityThreshold);
-			data.effect = aggregateEffects(found);
+			ProteomicsFileRow.SiteEffect e = aggregateEffects(found);
+			if (e != null) data.effect = e;
 		}
 	}
 
