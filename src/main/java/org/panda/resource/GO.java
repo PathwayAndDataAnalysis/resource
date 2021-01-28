@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -81,6 +82,12 @@ public class GO extends FileServer
 		printAssociatedTerms(genes, Collections.emptySet(), Collections.emptySet());
 	}
 
+	public void printTermsOfKeyword(String keyword)
+	{
+		Map<String, String> map = getTermsContaining(keyword);
+		map.forEach((id,  name) -> System.out.println(name + "\t" + id));
+	}
+
 	public void printAssociatedTerms(Set<String> genes, Set<String> ignoreTerms, Set<String> ignoreGenesOfTerms)
 	{
 		Set<String> termSet = genes.stream().map(this::getGOIDs).flatMap(Collection::stream).collect(Collectors.toSet());
@@ -144,7 +151,7 @@ public class GO extends FileServer
 
 	public Map<String, String> getTermsContaining(String query)
 	{
-		return idToName.keySet().stream().filter(id -> idToName.get(id).contains(query))
+		return idToName.keySet().stream().filter(id -> idToName.get(id).toLowerCase().contains(query.toLowerCase()))
 			.collect(Collectors.toMap(id -> id, id -> idToName.get(id)));
 	}
 
@@ -156,13 +163,19 @@ public class GO extends FileServer
 
 	public Set<String> getGenesContainingKeywordInTermNames(Set<String> keywords)
 	{
-		Set<String> genes = new HashSet<>();
-		for (String keyword : keywords)
-		{
-			genes.addAll(geneToGO.keySet().stream().filter(g -> geneToGO.get(g).stream().map(idToName::get)
-				.anyMatch(name -> name.contains(keyword))).collect(Collectors.toSet()));
-		}
-		return genes;
+		return getGenesContainingKeywordInTermNames(keywords, Collections.emptySet());
+	}
+
+	/**
+	 * Finds genes that has at least one GO term that contains one of the keywordsToKeep, but that same GO term does not
+	 * contain any keywordsToSkip.
+	 */
+	public Set<String> getGenesContainingKeywordInTermNames(Set<String> keywordsToKeep, Set<String> keywordsToSkip)
+	{
+		return geneToGO.keySet().stream().filter(g -> geneToGO.get(g).stream().map(idToName::get)
+			.anyMatch(name -> keywordsToKeep.stream().anyMatch(name::contains) &&
+				keywordsToSkip.stream().noneMatch(name::contains)))
+			.collect(Collectors.toSet());
 	}
 
 	/**
@@ -288,19 +301,12 @@ public class GO extends FileServer
 //		get().printAssociatedTerms(new HashSet<>(genes));
 
 //		genes.forEach(g -> get().printAssociatedTerms(g, ignore));
-//		get().printAssociatedTerms("ZNF732", Collections.emptySet());
-
-		// Print terms containing a keyword
-//		Map<String, String> termMap = get().getTermsContaining("damage");
-//		for (String id : termMap.keySet())
-//		{
-//			System.out.println(id + "\t" + termMap.get(id));
-//		}
+//		get().printAssociatedTerms("KDM5A", Collections.emptySet());
 
 //		checkInterestTermAssociationRate();
 
-		String go = "GO:0046390";
-		System.out.println(go + " = " + get().getNameOfTerm(go));
+//		String go = "GO:0046390";
+//		System.out.println(go + " = " + get().getNameOfTerm(go));
 
 //		get().printAssociatedCommonTerms("SCD");
 
@@ -308,6 +314,13 @@ public class GO extends FileServer
 //		Set<String> genes2 = get().getGenesOfTerm("GO:0008203");
 //		CollectionUtil.printVennCounts(genes1, genes2);
 //		genes2.stream().sorted().forEach(System.out::println);
+
+//		get().printTermsOfKeyword("histone deacetylase activity");
+//		get().printTermsOfKeyword("histone acetyltransferase activity");
+//		get().getGenesContainingKeywordInTermNames("histone acetyltransferase activity").stream().sorted().forEach(System.out::println);
+//		get().getGenesContainingKeywordInTermNames("regulation of histone deacetylase activity").stream().sorted().forEach(System.out::println);
+
+		get().getGenesContainingKeywordInTermNames(new HashSet<>(Arrays.asList("histone acetyltransferase activity", "histone deacetylase activity")), new HashSet<>(Arrays.asList("regulation of"))).forEach(System.out::println);
 	}
 
 	private static List<String> readPanCanGenes() throws IOException

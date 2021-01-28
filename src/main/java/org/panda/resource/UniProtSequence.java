@@ -1,9 +1,6 @@
 package org.panda.resource;
 
 import org.panda.utility.TermCounter;
-import org.panda.utility.graph.DirectedGraph;
-import org.panda.utility.graph.Graph;
-import org.panda.utility.graph.UndirectedGraph;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +16,9 @@ public class UniProtSequence extends FileServer
 	private static UniProtSequence instance;
 
 	private Map<String, String> nameToID;
+	private Map<String, String> nameToSymbol;
+	//The map is from organism to UP name
+	private Map<String, Map<String, String>> symbolToNames;
 	private Map<String, String> idToSeq;
 
 	public static synchronized UniProtSequence get()
@@ -120,10 +120,30 @@ public class UniProtSequence extends FileServer
 		return nameToID.get(uniprotName);
 	}
 
+	public String getSymbolOfName(String name)
+	{
+		return nameToSymbol.get(name);
+	}
+
+	public Map<String, String> getNamesOfSymbol(String symbol)
+	{
+		return symbolToNames.get(symbol);
+	}
+
+	public String getNameOfSymbol(String symbol, String organism)
+	{
+		return symbolToNames.containsKey(symbol) ? symbolToNames.get(symbol).getOrDefault(organism, null) : null;
+	}
+
+	/**
+	 * Does not read the last sequence, which belongs to Whitewater Arroyo mammarenavirus.
+	 */
 	@Override
 	public boolean load() throws IOException
 	{
 		nameToID = new HashMap<>();
+		nameToSymbol = new HashMap<>();
+		symbolToNames = new HashMap<>();
 		idToSeq = new HashMap<>();
 
 		String name = null;
@@ -149,6 +169,18 @@ public class UniProtSequence extends FileServer
 				name = t[2];
 				nameToID.put(name, id);
 				sequence = new StringBuilder();
+
+				int oInd = line.indexOf(" OX=");
+				String organism = line.substring(oInd + 4, line.indexOf(" ", oInd + 4));
+
+				int sInd = line.indexOf(" GN=");
+				if (sInd > 0)
+				{
+					String symbol = line.substring(sInd + 4, line.indexOf(" ", sInd + 4));
+					nameToSymbol.put(name, symbol);
+					if (!symbolToNames.containsKey(symbol)) symbolToNames.put(symbol, new HashMap<>());
+					symbolToNames.get(symbol).put(organism, name);
+				}
 			}
 			else
 			{
@@ -172,7 +204,10 @@ public class UniProtSequence extends FileServer
 
 //		System.out.println(get().getSeqAround("P0DP23", 80, 5));
 
-		countAAs();
+//		countAAs();
+
+//		System.out.println(get().getSymbolOfName("P53_HUMAN"));
+//		System.out.println(get().getNamesOfSymbol("TP53"));
 	}
 
 	private static void countAAs()

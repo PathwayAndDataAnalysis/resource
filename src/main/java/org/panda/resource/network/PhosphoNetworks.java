@@ -37,11 +37,13 @@ public class PhosphoNetworks extends FileServer
 		return new String[]{"PhosphoNetworks.txt"};
 	}
 
-	@Override
-	public String[] getDistantURLs()
-	{
-		return new String[]{"https://phosphonetworks.org/download/highResolutionNetwork.csv"};
-	}
+	// Temporarily disabled online downloading this file because the site became unsecure. If this problem resolves in
+	// the future, below code can be commented in.
+//	@Override
+//	public String[] getDistantURLs()
+//	{
+//		return new String[]{"https://phosphonetworks.org/download/highResolutionNetwork.csv"};
+//	}
 
 	@Override
 	public boolean load() throws IOException
