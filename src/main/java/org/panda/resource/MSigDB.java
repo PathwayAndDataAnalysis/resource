@@ -207,7 +207,7 @@ public class MSigDB extends FileServer
 		writer.close();
 	}
 
-	interface NameFilter
+	public interface NameFilter
 	{
 		boolean select(String name);
 	}

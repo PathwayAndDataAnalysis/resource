@@ -3,12 +3,18 @@ package org.panda.resource.network;
 import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.panda.resource.FileServer;
 import org.panda.resource.signednetwork.SignedType;
+import org.panda.utility.FileUtil;
 import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Serves the TFactS database, the signed version, human, and has publication ID.
@@ -72,20 +78,23 @@ public class TFactS extends FileServer
 
 			if (token.length < 5 || !token[4].toLowerCase().contains("homo sapiens") || !hasPubmedID(token[5])) continue;
 
+			Set<String> pmids = token[3].equals("Pubmed") ? Arrays.stream(token[5].split(";"))
+				.filter(s -> !s.isEmpty()).map(s -> "PMID:" + s).collect(Collectors.toSet()) : Collections.emptySet();
+
 			switch (token[2])
 			{
 				case "UP":
-					positive.putRelation(token[0], token[1]);
+					positive.putRelation(token[0], token[1], pmids);
 					break;
 				case "DOWN":
-					negative.putRelation(token[0], token[1]);
+					negative.putRelation(token[0], token[1], pmids);
 					break;
 				default:
 					System.err.println("Irregular sign: " + token[2]);
 					break;
 			}
 
-			unsigned.putRelation(token[0], token[1]);
+			unsigned.putRelation(token[0], token[1], pmids);
 		}
 
 		return true;
@@ -110,7 +119,12 @@ public class TFactS extends FileServer
 	
 	public static void main(String[] args)
 	{
-		boolean contains = get().getNegativeGraph().getDownstream("AATF").contains("CTNNB1");
-		System.out.println("contains = " + contains);
+//		boolean contains = get().getNegativeGraph().getDownstream("AATF").contains("CTNNB1");
+//		System.out.println("contains = " + contains);
+
+		BufferedWriter writer = FileUtil.newBufferedWriter("/Users/ozgun/Documents/Data/PathwayCommonsV12/TFactS.sif");
+		get().getPositiveGraph().write(writer);
+		get().getNegativeGraph().write(writer);
+		FileUtil.closeWriter(writer);
 	}
 }

@@ -5,7 +5,7 @@ import org.panda.resource.signednetwork.SignedType;
 import org.panda.utility.CollectionUtil;
 import org.panda.utility.Kronometre;
 import org.panda.utility.TermCounter;
-import org.panda.utility.graph.PhosphoGraph;
+import org.panda.utility.graph.SiteSpecificGraph;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -29,7 +29,7 @@ public class UniProt extends FileServer
 {
 	static UniProt instance;
 
-	static PhosphoGraph graph;
+	static SiteSpecificGraph graph;
 
 	public static UniProt get()
 	{
@@ -37,7 +37,7 @@ public class UniProt extends FileServer
 		return instance;
 	}
 
-	public PhosphoGraph getGraph()
+	public SiteSpecificGraph getGraph()
 	{
 		return graph;
 	}
@@ -51,7 +51,7 @@ public class UniProt extends FileServer
 	@Override
 	public boolean load() throws IOException
 	{
-		graph = new PhosphoGraph("UniProt", SignedType.PHOSPHORYLATES.getTag());
+		graph = new SiteSpecificGraph("UniProt", SignedType.PHOSPHORYLATES.getTag());
 
 		Scanner scanner = new Scanner(new File(locateInBase(getLocalFilenames()[0])));
 		String target = null;
@@ -105,7 +105,7 @@ public class UniProt extends FileServer
 	static class UPHandler extends DefaultHandler
 	{
 
-		PhosphoGraph graph = new PhosphoGraph("UniProt", SignedType.PHOSPHORYLATES.getTag());
+		SiteSpecificGraph graph = new SiteSpecificGraph("UniProt", SignedType.PHOSPHORYLATES.getTag());
 
 		String[] source = null;
 		String target = null;
@@ -245,7 +245,7 @@ public class UniProt extends FileServer
 	public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException
 	{
 		convertFromUniProtXML();
-//		PhosphoGraph pn = get().getGraph();
+//		SiteSpecificGraph pn = get().getGraph();
 //		boolean contains = pn.getDownstream("MAPK14").contains("MAPKAPK2");
 //		System.out.println("contains = " + contains);
 	}

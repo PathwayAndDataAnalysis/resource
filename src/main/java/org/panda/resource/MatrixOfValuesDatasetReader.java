@@ -49,6 +49,11 @@ public class MatrixOfValuesDatasetReader
 		this.delimiter = delimiter;
 	}
 
+	public void load() throws IOException
+	{
+		load(null);
+	}
+
 	public void load(Set<String> genes) throws IOException
 	{
 		Optional<String> opt = Files.lines(Paths.get(filename)).filter(l -> !l.startsWith("#")).findFirst();

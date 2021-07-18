@@ -1,6 +1,7 @@
 package org.panda.resource.tcga;
 
 import org.panda.resource.siteeffect.PhosphoSitePlus;
+import org.panda.resource.siteeffect.Feature;
 import org.panda.utility.statistics.Summary;
 
 import java.io.BufferedWriter;
@@ -21,9 +22,11 @@ public class ProteomicsFileRow implements Cloneable
 	public Map<String, List<String>> sites;
 	public SiteEffect effect;
 	public String[] header;
-	Type type;
+	public Feature mod;
+	public Type type;
 
-	public ProteomicsFileRow(String id, double[] vals, List<String> genes, Map<String, List<String>> sites)
+	public ProteomicsFileRow(String id, double[] vals, List<String> genes, Map<String, List<String>> sites,
+		Feature mod)
 	{
 		this.id = id;
 		this.vals = vals;
@@ -31,15 +34,20 @@ public class ProteomicsFileRow implements Cloneable
 		this.sites = sites;
 
 		if (sites != null && !sites.isEmpty()) type = Type.SITE_SPECIFIC;
-		else type = Type.TOTAL_PROTEIN;
+		else if (mod == Feature.GLOBAL_PROTEIN) type = Type.GLOBAL_PROTEIN;
+		else if (mod == Feature.RNA) type = Type.RNA;
+		else if (mod == Feature.METABOLITE) type = Type.METABOLITE;
+		else type = Type.GLOBAL_PROTEIN;
 
 		if (sites == null) return;
+
+		this.mod = mod == null ? Feature.PHOSPHORYLATION : mod;
 
 		for (String gene : sites.keySet())
 		{
 			for (String site : sites.get(gene))
 			{
-				Integer eff = PhosphoSitePlus.get().getEffect(gene, site);
+				Integer eff = PhosphoSitePlus.get().getEffect(gene, site, this.mod);
 				if (eff != null)
 				{
 					effect = SiteEffect.getValue(eff);
@@ -66,14 +74,24 @@ public class ProteomicsFileRow implements Cloneable
 //		}
 	}
 
-	public boolean isPhospho()
+	public boolean isSiteSpecific()
 	{
 		return type == Type.SITE_SPECIFIC;
 	}
 
-	public boolean isTotalProt()
+	public boolean isGlobalProt()
 	{
-		return type == Type.TOTAL_PROTEIN;
+		return type == Type.GLOBAL_PROTEIN;
+	}
+
+	public boolean isRNA()
+	{
+		return type == Type.RNA;
+	}
+
+	public boolean isMetabolite()
+	{
+		return type == Type.METABOLITE;
 	}
 
 	public boolean isActivity()
@@ -83,7 +101,7 @@ public class ProteomicsFileRow implements Cloneable
 
 	public int getSelfEffect()
 	{
-		if (!isPhospho()) return 1;
+		if (!isSiteSpecific()) return 1;
 		else if (effect == null) return 0;
 		else return effect.getVal();
 	}
@@ -167,7 +185,7 @@ public class ProteomicsFileRow implements Cloneable
 		{
 			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
 
-			writer.write("ID\tSymbol\tSite\tEffect");
+			writer.write("ID\tSymbols\tSites\tFeature\tEffect");
 
 			Iterator<ProteomicsFileRow> iter = datas.iterator();
 			ProteomicsFileRow sample = iter.next();
@@ -200,11 +218,16 @@ public class ProteomicsFileRow implements Cloneable
 
 					items = siteList.toString().replace(",", "").replace("[", "").replace("]", "");
 					writer.write("\t" + items);
+				}
 
+				writer.write("\t" + (data.mod != null ? data.mod.toString().substring(0, 1) : ""));
+
+				if (data.sites != null)
+				{
 					writer.write("\t" + (data.effect == null ? "" : data.effect == SiteEffect.COMPLEX ?
 						"c" : data.effect == SiteEffect.ACTIVATING ? "a" : "i"));
 				}
-				else writer.write("\t\t");
+				else writer.write("\t");
 
 				for (double v : data.vals)
 				{
@@ -227,10 +250,11 @@ public class ProteomicsFileRow implements Cloneable
 
 	public enum Type
 	{
-		TOTAL_PROTEIN,
+		GLOBAL_PROTEIN,
 		SITE_SPECIFIC,
 		ACTIVITY,
-		EXPRESSION
+		RNA,
+		METABOLITE
 	}
 
 	public static List<ProteomicsFileRow> copy(List<ProteomicsFileRow> orig)

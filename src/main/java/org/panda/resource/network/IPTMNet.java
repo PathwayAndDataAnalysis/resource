@@ -2,14 +2,16 @@ package org.panda.resource.network;
 
 import org.panda.resource.FileServer;
 import org.panda.resource.signednetwork.SignedType;
-import org.panda.utility.graph.PhosphoGraph;
+import org.panda.utility.FileUtil;
+import org.panda.utility.TermCounter;
+import org.panda.utility.graph.DirectedGraph;
+import org.panda.utility.graph.SiteSpecificGraph;
 
-import java.io.File;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +25,7 @@ public class IPTMNet extends FileServer
 {
 	static IPTMNet instance;
 
-	static PhosphoGraph graph;
+	Map<SignedType, SiteSpecificGraph> graphs;
 
 	public static IPTMNet get()
 	{
@@ -31,9 +33,14 @@ public class IPTMNet extends FileServer
 		return instance;
 	}
 
-	public PhosphoGraph getGraph()
+	public SiteSpecificGraph getGraph(SignedType type)
 	{
-		return graph;
+		return graphs.get(type);
+	}
+
+	public Map<SignedType, DirectedGraph> getAllGraphs()
+	{
+		return new HashMap<>(graphs);
 	}
 
 	@Override
@@ -45,15 +52,22 @@ public class IPTMNet extends FileServer
 	@Override
 	public boolean load() throws IOException
 	{
-		graph = new PhosphoGraph("iPTMNet", SignedType.PHOSPHORYLATES.getTag());
+		graphs = new HashMap<>();
+		graphs.put(SignedType.PHOSPHORYLATES, new SiteSpecificGraph("iPTMNet Phosphorylation", SignedType.PHOSPHORYLATES.getTag()));
+		graphs.put(SignedType.ACETYLATES, new SiteSpecificGraph("iPTMNet Acetylation", SignedType.ACETYLATES.getTag()));
+		graphs.put(SignedType.METHYLATES, new SiteSpecificGraph("iPTMNet Methylation", SignedType.METHYLATES.getTag()));
 
 //		Set<String> set = Files.lines(Paths.get(locateInBase(getLocalFilenames()[0]))).map(l -> l.split("\t")[0]).collect(Collectors.toSet());
 //		System.out.println("set = " + set);
 
+		Map<String, SignedType> modMap = new HashMap<>();
+		modMap.put("PHOSPHORYLATION", SignedType.PHOSPHORYLATES);
+		modMap.put("ACETYLATION", SignedType.ACETYLATES);
+		modMap.put("METHYLATION", SignedType.METHYLATES);
 
 		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0]))).map(l -> l.split("\t"))
 			.filter(t -> t.length > 7)
-			.filter(t -> t[0].equals("PHOSPHORYLATION"))
+			.filter(t -> modMap.keySet().contains(t[0]))
 			.filter(t -> t[4].equals("Homo sapiens (Human)"))
 			.filter(t -> !t[7].isEmpty())
 			.forEach(t ->
@@ -62,13 +76,18 @@ public class IPTMNet extends FileServer
 			String target = t[3];
 			String site = t[5];
 
+			Set<String> pmids = t.length > 9 ? Arrays.stream(t[9].split(",")).map(s -> "PMID:" + s).collect(Collectors.toSet()) : Collections.emptySet();
+
+			SiteSpecificGraph graph = graphs.get(modMap.get(t[0]));
+
 			if (!graph.hasRelation(source, target))
 			{
-				graph.putRelation(source, target, "", site);
+				graph.putRelation(source, target, pmids, site);
 			}
 			else
 			{
 				graph.addSite(source, target, site);
+				graph.addMediators(source, target, pmids);
 			}
 		});
 
@@ -77,13 +96,16 @@ public class IPTMNet extends FileServer
 
 	public static void main(String[] args)
 	{
-		PhosphoGraph pn = get().getGraph();
-//		pn.printStats();
-
-		Set<String> sites = pn.getSites("SRC", "ITGB3");
-		sites.forEach(System.out::println);
-
-//		boolean contains = pn.getUpstream("ITGB3").contains("SRC");
-//		System.out.println("contains = " + contains);
+		BufferedWriter writer = FileUtil.newBufferedWriter("/Users/ozgun/Documents/Data/PathwayCommonsV12/IPTMNet.sif");
+		for (SignedType type : SignedType.values())
+		{
+			SiteSpecificGraph graph = get().getGraph(type);
+			if (graph != null)
+			{
+				graph.write(writer);
+				graph.printStats();
+			}
+		}
+		FileUtil.closeWriter(writer);
 	}
 }

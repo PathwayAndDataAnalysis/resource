@@ -4,41 +4,41 @@ import org.panda.resource.FileServer;
 import org.panda.resource.tcga.ProteomicsFileRow;
 import org.panda.utility.TermCounter;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * Provides phospho-site effects from PhosphoSitePlus.
+ * Base class for providing site effects.
  *
  * @author Ozgun Babur
  */
 public abstract class SiteEffectServer extends FileServer
 {
-	Map<String, Map<String, Integer>> typeMap;
+	Map<Feature, Map<String, Map<String, Integer>>> typeMap;
 
-	public Integer getEffect(String gene, String site)
+	public Integer getEffect(String gene, String site, Feature mod)
 	{
-		if (typeMap.containsKey(gene))
+		if (typeMap.containsKey(mod) && typeMap.get(mod).containsKey(gene))
 		{
-			return typeMap.get(gene).get(site);
+			return typeMap.get(mod).get(gene).get(site);
 		}
 		return null;
 	}
 
-	public Integer getClosestEffect(String gene, String site, int distanceThreshold)
+	public Integer getClosestEffect(String gene, String site, Feature mod, int distanceThreshold)
 	{
-		if (typeMap.containsKey(gene))
+		Map<String, Map<String, Integer>> map = typeMap.get(mod);
+		if (map == null) return null;
+
+		if (map.containsKey(gene))
 		{
 			int s0 = Integer.parseInt(site.substring(1));
 
 			Integer effect = null;
 			int closestDist = Integer.MAX_VALUE;
 
-			for (String ss : typeMap.get(gene).keySet())
+			for (String ss : map.get(gene).keySet())
 			{
-				Integer eff = typeMap.get(gene).get(ss);
+				Integer eff = map.get(gene).get(ss);
 
 				int s1 = Integer.parseInt(ss.substring(1));
 
@@ -64,7 +64,7 @@ public abstract class SiteEffectServer extends FileServer
 		Collections.sort(list, (o1, o2) -> {
 			try
 			{
-				return new Integer(o1.substring(1)).compareTo(new Integer(o2.substring(1)));
+				return Integer.valueOf(o1.substring(1)).compareTo(Integer.valueOf(o2.substring(1)));
 			}
 			catch (NumberFormatException e)
 			{
@@ -74,39 +74,47 @@ public abstract class SiteEffectServer extends FileServer
 		return list;
 	}
 
-	protected List<String> getGenesWithMostSites()
+	protected List<String> getGenesWithMostSites(Feature mod)
 	{
-		List<String> genes = new ArrayList<>(typeMap.keySet());
-		Collections.sort(genes, (o1, o2) -> new Integer(typeMap.get(o2).size()).compareTo(typeMap.get(o1).size()));
+		if (!typeMap.containsKey(mod)) return Collections.emptyList();
+
+		List<String> genes = new ArrayList<>(typeMap.get(mod).keySet());
+		Collections.sort(genes, (o1, o2) -> Integer.valueOf(typeMap.get(mod).get(o2).size()).compareTo(typeMap.get(mod).get(o1).size()));
 		return genes;
 	}
 
 	protected void printSites(String gene)
 	{
 		System.out.println("Gene: " + gene);
-		if (typeMap.containsKey(gene))
+		for (Feature mod : Feature.values())
 		{
-			for (String site : sortSites(typeMap.get(gene).keySet()))
+			if (typeMap.containsKey(mod) && typeMap.get(mod).containsKey(gene))
 			{
-				Integer sign = typeMap.get(gene).get(site);
-				System.out.print("\tsite: " + site + "\t" + (sign == 1 ? "activating" : sign == -1 ? "inhibiting" : "complex"));
+				for (String site : sortSites(typeMap.get(mod).get(gene).keySet()))
+				{
+					Integer sign = typeMap.get(mod).get(gene).get(site);
+					System.out.print("\tsite: " + site + "\t" + (sign == 1 ? "activating" : sign == -1 ? "inhibiting" : "complex"));
+				}
 			}
 		}
 	}
 
-	protected void printUniqueAA()
+	protected void printUniqueAA(Feature mod)
 	{
-		Set<String> sites = new HashSet<>();
-		for (String gene : typeMap.keySet())
+		if (typeMap.containsKey(mod))
 		{
-			sites.addAll(typeMap.get(gene).keySet());
+			Set<String> sites = new HashSet<>();
+			for (String gene : typeMap.get(mod).keySet())
+			{
+				sites.addAll(typeMap.get(mod).get(gene).keySet());
+			}
+			TermCounter tc = new TermCounter();
+			for (String site : sites)
+			{
+				tc.addTerm(site.substring(0, 1));
+			}
+			tc.print();
 		}
-		TermCounter tc = new TermCounter();
-		for (String site : sites)
-		{
-			tc.addTerm(site.substring(0, 1));
-		}
-		tc.print();
 	}
 
 	public void fillInMissingEffect(Collection<ProteomicsFileRow> datas, int proximityThreshold)
@@ -116,13 +124,13 @@ public abstract class SiteEffectServer extends FileServer
 			if (data.effect != null && data.effect != ProteomicsFileRow.SiteEffect.COMPLEX) continue;
 			if (data.sites == null || data.sites.isEmpty()) continue;
 
-			Set<Integer> found = getEffects(data, proximityThreshold);
+			Set<Integer> found = getEffects(data, data.mod, proximityThreshold);
 			ProteomicsFileRow.SiteEffect e = aggregateEffects(found);
 			if (e != null) data.effect = e;
 		}
 	}
 
-	public Set<Integer> getEffects(ProteomicsFileRow data, int proximityThreshold)
+	public Set<Integer> getEffects(ProteomicsFileRow data, Feature mod, int proximityThreshold)
 	{
 		Set<Integer> found = new HashSet<>();
 
@@ -130,7 +138,7 @@ public abstract class SiteEffectServer extends FileServer
 		{
 			for (String site : data.sites.get(gene))
 			{
-				Integer e = getEffect(gene, site);
+				Integer e = getEffect(gene, site, mod);
 				if (e != null) found.add(e);
 			}
 		}
@@ -141,7 +149,7 @@ public abstract class SiteEffectServer extends FileServer
 			{
 				for (String site : data.sites.get(gene))
 				{
-					Integer e = getClosestEffect(gene, site, proximityThreshold);
+					Integer e = getClosestEffect(gene, site, mod, proximityThreshold);
 					if (e != null) found.add(e);
 				}
 			}
@@ -165,13 +173,15 @@ public abstract class SiteEffectServer extends FileServer
 		return null;
 	}
 
-	public Set<String> getAllGenes()
+	public Set<String> getAllGenes(Feature mod)
 	{
-		return typeMap.keySet();
+		return typeMap.containsKey(mod) ? typeMap.get(mod).keySet() : Collections.emptySet();
 	}
 
-	public Set<String> getSites(String gene)
+	public Set<String> getSites(String gene, Feature mod)
 	{
-		return typeMap.containsKey(gene) ? typeMap.get(gene).keySet() : Collections.emptySet();
+		if (typeMap.containsKey(mod))
+			return typeMap.get(mod).containsKey(gene) ? typeMap.get(mod).get(gene).keySet() : Collections.emptySet();
+		return Collections.emptySet();
 	}
 }

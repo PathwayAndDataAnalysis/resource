@@ -15,6 +15,8 @@ public class CustomSiteEffectServer extends SiteEffectServer
 	public boolean load(String file) throws IOException
 	{
 		typeMap = new HashMap<>();
+		Feature mod = Feature.PHOSPHORYLATION;
+		typeMap.put(mod, new HashMap<>());
 
 		Files.lines(Paths.get(file)).map(l -> l.split("\t")).forEach(t ->
 		{
@@ -22,8 +24,8 @@ public class CustomSiteEffectServer extends SiteEffectServer
 			String site = t[1];
 			Integer effect = Integer.valueOf(t[2]);
 
-			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
-			typeMap.get(gene).put(site, effect);
+			if (!typeMap.get(mod).containsKey(gene)) typeMap.get(mod).put(gene, new HashMap<>());
+			typeMap.get(mod).get(gene).put(site, effect);
 		});
 
 		return true;

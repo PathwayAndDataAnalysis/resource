@@ -7,7 +7,7 @@ import org.panda.resource.signednetwork.SignedType;
 import org.panda.utility.CollectionUtil;
 import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
-import org.panda.utility.graph.PhosphoGraph;
+import org.panda.utility.graph.SiteSpecificGraph;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -36,7 +36,8 @@ public class SignedPC extends PathwayCommons
 		Map<SignedType, DirectedGraph> map = new HashMap<>();
 		for (SignedType type : SignedType.values())
 		{
-			map.put(type, getGraph(type));
+			DirectedGraph graph = getGraph(type);
+			if (graph != null) map.put(type, graph);
 		}
 		return map;
 	}
@@ -51,12 +52,11 @@ public class SignedPC extends PathwayCommons
 		String edgeType = CollectionUtil.merge(
 			Arrays.stream(types).map(SIFType::getTag).collect(Collectors.toList()), ",");
 
-		boolean phos = Arrays.stream(types).anyMatch(type ->
-			type == SignedType.PHOSPHORYLATES || type == SignedType.DEPHOSPHORYLATES);
+		boolean ss = Arrays.stream(types).anyMatch(type -> (type instanceof SignedType) && ((SignedType) type).isSiteSpecific());
 
 		if (fileExists(types))
 		{
-			DirectedGraph graph = phos ? new PhosphoGraph("Signed PC", edgeType) :
+			DirectedGraph graph = ss ? new SiteSpecificGraph("Signed PC", edgeType) :
 				new DirectedGraph("Signed PC", edgeType);
 
 			for (SIFType type : types)
@@ -65,9 +65,9 @@ public class SignedPC extends PathwayCommons
 					.map(line -> line.split("\t")).forEach(token -> {
 					if (token.length > 2)
 					{
-						if (phos && token.length > 3)
+						if (ss && token.length > 3)
 						{
-							((PhosphoGraph) graph).putRelation(token[0], token[1], token[2], token[3]);
+							((SiteSpecificGraph) graph).putRelation(token[0], token[1], token[2], token[3]);
 						} else
 						{
 							graph.putRelation(token[0], token[1], token[2]);
@@ -177,7 +177,7 @@ public class SignedPC extends PathwayCommons
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{GITHUB_REPO_BASE + "curated-signed-false.sif", GITHUB_REPO_BASE + "SignedPC.sif.gz",
+		return new String[]{GITHUB_REPO_BASE + "curated-signed-false.sif", GITHUB_REPO_BASE + "SignedPC-v12.sif.gz",
 			GITHUB_REPO_BASE + "curated-signed.sif"};
 	}
 
@@ -185,8 +185,8 @@ public class SignedPC extends PathwayCommons
 	{
 		printNetworkSizes();
 
-//		DirectedGraph graph = SignedPCNoTransfac.get().getGraph(SignedType.UPREGULATES_EXPRESSION);
-//		Set<String> set = graph.getDownstream("RB1");
+//		DirectedGraph phospGraph = SignedPCNoTransfac.get().getGraph(SignedType.UPREGULATES_EXPRESSION);
+//		Set<String> set = phospGraph.getDownstream("RB1");
 //		System.out.println("set.contains(\"MYC\") = " + set.contains("MYC"));
 	}
 

@@ -87,7 +87,7 @@ public class RPPAReader
 				sitesMap.put(g, sites);
 			}
 
-			ProteomicsFileRow d = new ProteomicsFileRow(id, null, geneList, sitesMap);
+			ProteomicsFileRow d = new ProteomicsFileRow(id, null, geneList, sitesMap, null);
 
 			idToData.put(id, d);
 

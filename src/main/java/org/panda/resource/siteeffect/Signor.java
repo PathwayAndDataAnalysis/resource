@@ -44,6 +44,8 @@ public class Signor extends SiteEffectServer
 	public boolean load() throws IOException
 	{
 		typeMap = new HashMap<>();
+		Feature mod = Feature.PHOSPHORYLATION;
+		typeMap.put(mod, new HashMap<>());
 
 		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0]))).skip(1).map(l -> l.split(";"))
 			.filter(t -> t.length > 12)
@@ -69,8 +71,8 @@ public class Signor extends SiteEffectServer
 			else if (residue.startsWith("His")) residue = residue.replace("His", "H");
 			else throw new RuntimeException("Different residue: " + residue);
 
-			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
-			typeMap.get(gene).put(residue, sign);
+			if (!typeMap.get(mod).containsKey(gene)) typeMap.get(mod).put(gene, new HashMap<>());
+			typeMap.get(mod).get(gene).put(residue, sign);
 		});
 
 		return true;

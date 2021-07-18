@@ -3,7 +3,7 @@ package org.panda.resource.network;
 import org.panda.resource.FileServer;
 import org.panda.resource.signednetwork.SignedType;
 import org.panda.utility.graph.DirectedGraph;
-import org.panda.utility.graph.PhosphoGraph;
+import org.panda.utility.graph.SiteSpecificGraph;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -39,7 +39,7 @@ public class RhoGEF extends FileServer
 	@Override
 	public boolean load() throws IOException
 	{
-		graph = new PhosphoGraph("rho-gef", SignedType.ACTIVATES_GTPASE.getTag());
+		graph = new SiteSpecificGraph("rho-gef", SignedType.ACTIVATES_GTPASE.getTag());
 		graph.load(locateInBase(getLocalFilenames()[0]), Collections.singleton("activates-gtpase"));
 
 		return true;

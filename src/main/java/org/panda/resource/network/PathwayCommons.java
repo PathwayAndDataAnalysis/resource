@@ -32,7 +32,7 @@ public class PathwayCommons extends FileServer
 	}
 
 	/**
-	 * Gets a graph that is a merge of the desired SIF types.
+	 * Gets a phospGraph that is a merge of the desired SIF types.
 	 */
 	public Graph getGraph(SIFType... types)
 	{
@@ -70,7 +70,7 @@ public class PathwayCommons extends FileServer
 	}
 
 	/**
-	 * Returns the graph for the given SIF type.
+	 * Returns the phospGraph for the given SIF type.
 	 */
 	public Graph getSingleGraph(SIFType type)
 	{try{
@@ -146,7 +146,7 @@ public class PathwayCommons extends FileServer
 	}
 
 	/**
-	 * Prints graph statistics.
+	 * Prints phospGraph statistics.
 	 */
 	private void printNetworkSizes()
 	{
@@ -184,7 +184,7 @@ public class PathwayCommons extends FileServer
 	@Override
 	public String[] getDistantURLs() { try
 	{
-		String base = "http://www.pathwaycommons.org/archives/PC2/v9/";
+		String base = "https://www.pathwaycommons.org/archives/PC2/v12/";
 		String partial = "All.hgnc.txt.gz";
 
 		Scanner sc = new Scanner(new URL(base).openStream());

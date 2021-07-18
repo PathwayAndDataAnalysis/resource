@@ -14,19 +14,33 @@ import java.util.List;
 public enum SignedType implements SIFType
 {
 	PHOSPHORYLATES("First protein positively affects phosphorylation of the second protein.",
-		true, true),
+		true, true, true),
 	DEPHOSPHORYLATES("First protein negatively affects phosphorylation of the second protein.",
-		true, true),
+		true, true, false),
+	ACETYLATES("First protein positively affects acetylation of the second protein.",
+		true, true, true),
+	DEACETYLATES("First protein negatively affects acetylation of the second protein.",
+		true, true, false),
+	METHYLATES("First protein positively affects methylation of the second protein.",
+		true, true, true),
+	DEMETHYLATES("First protein negatively affects methylation of the second protein.",
+		true, true, false),
 	UPREGULATES_EXPRESSION("First protein positively affects expression of the second protein.",
-		true, false),
+		true, false, true),
 	DOWNREGULATES_EXPRESSION("First protein negatively affects expression of the second protein.",
-		true, false),
+		true, false, false),
 	ACTIVATES_GTPASE("First protein activates the target GTPase signaling function by one of the several possible " +
 		"ways.",
-		true, false),
+		true, false, true),
 	INHIBITS_GTPASE("First protein inhibits the target GTPase signaling function by one of the several possible " +
 		"ways.",
-		true, false),
+		true, false, false),
+	PRODUCES("Source protein produces the target metabolite.",
+		true, false, true),
+	CONSUMES("Source protein consumes the target metabolite.",
+		true, false, false),
+	USED_TO_PRODUCE("Source metabolite is converted into the target metabolite.",
+		true, false, true),
 	;
 
 	/**
@@ -34,11 +48,13 @@ public enum SignedType implements SIFType
 	 * @param description description of the edge type
 	 * @param directed whether the edge type is directed
 	 */
-	SignedType(String description, boolean directed, boolean phospho, Class<? extends SIFMiner>... miners)
+	SignedType(String description, boolean directed, boolean siteSpecific, boolean positive,
+		Class<? extends SIFMiner>... miners)
 	{
 		this.description = description;
 		this.directed = directed;
-		this.phospho = phospho;
+		this.siteSpecific = siteSpecific;
+		this.positive = positive;
 		this.miners = Arrays.asList(miners);
 	}
 
@@ -53,9 +69,15 @@ public enum SignedType implements SIFType
 	private boolean directed;
 
 	/**
-	 * Whether this relation is related to a phosphorylation event.
+	 * Whether this relation is a site-specific event.
 	 */
-	private boolean phospho;
+	private boolean siteSpecific;
+
+	/**
+	 * We always have a positive and a negative relation of similar types. Like acetylation (positive) and deacetylation
+	 * (negative).
+	 */
+	private boolean positive;
 
 	/**
 	 * SIF Miners to use during a search.
@@ -80,9 +102,14 @@ public enum SignedType implements SIFType
 		return directed;
 	}
 
-	public boolean isPhospho()
+	public boolean isSiteSpecific()
 	{
-		return phospho;
+		return siteSpecific;
+	}
+
+	public boolean isPositive()
+	{
+		return this.positive;
 	}
 
 	/**

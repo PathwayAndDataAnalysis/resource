@@ -3,7 +3,6 @@ package org.panda.resource.siteeffect;
 import org.panda.resource.HGNC;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -18,7 +17,7 @@ public class PhosphoSitePlus extends SiteEffectServer
 {
 	private static PhosphoSitePlus instance;
 
-	private Map<String, Map<String, String>> actualMap;
+	private Map<Feature, Map<String, Map<String, String>>> actualMap;
 
 	public static synchronized PhosphoSitePlus get()
 	{
@@ -43,24 +42,28 @@ public class PhosphoSitePlus extends SiteEffectServer
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{"Regulatory_sites", "manually-curated-sites.txt"};
+		return new String[]{"psp-regulatory-sites", "manually-curated-sites.txt"};
 	}
 
 	protected void printSites(String gene)
 	{
 		System.out.println("Gene: " + gene);
-		if (typeMap.containsKey(gene))
+		for (Feature mod : Feature.values())
 		{
-			for (String site : sortSites(typeMap.get(gene).keySet()))
+			System.out.println("mod = " + mod);
+			if (typeMap.get(mod).containsKey(gene))
 			{
-				Integer sign = typeMap.get(gene).get(site);
-				System.out.print("\tsite: " + site + "\t" + (sign == 1 ? "activating" : sign == -1 ? "inhibiting" : "complex"));
-				System.out.println("\t(" + actualMap.get(gene).get(site) + ")");
+				for (String site : sortSites(typeMap.get(mod).get(gene).keySet()))
+				{
+					Integer sign = typeMap.get(mod).get(gene).get(site);
+					System.out.print("\tsite: " + site + "\t" + (sign == 1 ? "activating" : sign == -1 ? "inhibiting" : "complex"));
+					System.out.println("\t(" + actualMap.get(mod).get(gene).get(site) + ")");
+				}
 			}
-		}
-		else
-		{
-			System.out.println("Not found.");
+			else
+			{
+				System.out.println("Not found.");
+			}
 		}
 	}
 
@@ -70,42 +73,75 @@ public class PhosphoSitePlus extends SiteEffectServer
 		typeMap = new HashMap<>();
 		actualMap = new HashMap<>();
 
-		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0])))//, Charset.forName("windows-31j")).skip(4)
+		Files.lines(Paths.get(locateInBase(getLocalFilenames()[0]))/*, Charset.forName("windows-31j")*/).skip(4)
 			.map(line -> line.split("\t"))
 			.filter(token -> token.length >= 13 && token[6].equals("human") &&
-				token[8].equals("PHOSPHORYLATION") && HGNC.get().getSymbol(token[4]) != null)
-			.forEach(token -> {
-				String gene = HGNC.get().getSymbol(token[4]);
-				if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
-				if (!actualMap.containsKey(gene)) actualMap.put(gene, new HashMap<>());
-
+				HGNC.get().getSymbol(token[0]) != null)
+			.forEach(token ->
+			{
+				String gene = HGNC.get().getSymbol(token[0]);
 				String site = token[7];
 
-				if (typeMap.get(gene).containsKey(site)) return;
+				String modStr = site.substring(site.lastIndexOf("-") + 1);
+				site = site.substring(0, site.lastIndexOf("-"));
 
-				actualMap.get(gene).put(site, token[12]);
+				Feature mod = null;
+
+				switch (modStr)
+				{
+					case "p":
+						mod = Feature.PHOSPHORYLATION;
+						break;
+					case "ac":
+						mod = Feature.ACETYLATION;
+						break;
+					case "me":
+					case "m1":
+					case "m2":
+						mod = Feature.METHYLATION;
+						break;
+					case "ub":
+						mod = Feature.UBIQUITINATION;
+						break;
+				}
+				if (mod == null) return;
+
+				if (!typeMap.containsKey(mod))
+				{
+					typeMap.put(mod, new HashMap<>());
+					actualMap.put(mod, new HashMap<>());
+				}
+
+				if (!typeMap.get(mod).containsKey(gene)) typeMap.get(mod).put(gene, new HashMap<>());
+				if (!actualMap.get(mod).containsKey(gene)) actualMap.get(mod).put(gene, new HashMap<>());
+
+
+				if (typeMap.get(mod).get(gene).containsKey(site)) return;
+
+				String function = token[11];
+				actualMap.get(mod).get(gene).put(site, function);
 
 				boolean actWord = false;
 				boolean inhWord = false;
 
-				if ((token[12].contains("induced") &&
-					!token[12].contains("receptor desensitization, induced")))
+				if ((function.contains("induced") &&
+					!function.contains("receptor desensitization, induced")))
 				{
 					actWord = true;
 				}
-				if ((token[12].contains("inhibited") ||
-					token[12].contains("receptor desensitization, induced")))
+				if ((function.contains("inhibited") ||
+					function.contains("receptor desensitization, induced")))
 				{
 					inhWord = true;
 				}
 
 				if (actWord == inhWord)
 				{
-					if (token[12].contains("stabilization"))
+					if (function.contains("stabilization"))
 					{
 						actWord = true;
 					}
-					if (token[12].contains("degradation"))
+					if (function.contains("degradation"))
 					{
 						inhWord = true;
 					}
@@ -113,10 +149,10 @@ public class PhosphoSitePlus extends SiteEffectServer
 
 				if (actWord == inhWord)
 				{
-					typeMap.get(gene).put(site, 0);
+					typeMap.get(mod).get(gene).put(site, 0);
 				} else
 				{
-					typeMap.get(gene).put(site, actWord ? 1 : -1);
+					typeMap.get(mod).get(gene).put(site, actWord ? 1 : -1);
 				}
 		});
 
@@ -125,14 +161,14 @@ public class PhosphoSitePlus extends SiteEffectServer
 		{
 			String gene = token[0];
 
-			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<>());
-			if (!actualMap.containsKey(gene)) actualMap.put(gene, new HashMap<>());
+			if (!typeMap.get(Feature.PHOSPHORYLATION).containsKey(gene)) typeMap.get(Feature.PHOSPHORYLATION).put(gene, new HashMap<>());
+			if (!actualMap.get(Feature.PHOSPHORYLATION).containsKey(gene)) actualMap.get(Feature.PHOSPHORYLATION).put(gene, new HashMap<>());
 
 			String site = token[1];
 			int sign = Integer.parseInt(token[2]);
 
-			typeMap.get(gene).put(site, sign);
-			actualMap.get(gene).put(site, "manual curation");
+			typeMap.get(Feature.PHOSPHORYLATION).get(gene).put(site, sign);
+			actualMap.get(Feature.PHOSPHORYLATION).get(gene).put(site, "manual curation");
 		});
 
 		return true;
@@ -144,8 +180,11 @@ public class PhosphoSitePlus extends SiteEffectServer
 
 		resourceStream.map(l -> l.split("\t")).forEach(t ->
 		{
-			if (!typeMap.containsKey(t[0])) typeMap.put(t[0], new HashMap<>());
-			typeMap.get(t[0]).put(t[1], Integer.valueOf(t[2]));
+			Feature mod = Feature.valueOf(t[2]);
+			if (typeMap.containsKey(mod)) typeMap.put(mod, new HashMap<>());
+
+			if (!typeMap.get(mod).containsKey(t[0])) typeMap.get(mod).put(t[0], new HashMap<>());
+			typeMap.get(mod).get(t[0]).put(t[1], Integer.valueOf(t[3]));
 		});
 	}
 
@@ -157,7 +196,7 @@ public class PhosphoSitePlus extends SiteEffectServer
 //		{
 //			printSites(list.get(i));
 //		}
-		psp.printSites("AKT3");
+		psp.printSites("FOXM1");
 //		printUniqueAA();
 
 //		List<Integer> dists = new ArrayList<>();

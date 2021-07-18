@@ -2,8 +2,7 @@ package org.panda.resource.network;
 
 import org.panda.resource.FileServer;
 import org.panda.resource.signednetwork.SignedType;
-import org.panda.utility.graph.Graph;
-import org.panda.utility.graph.PhosphoGraph;
+import org.panda.utility.graph.SiteSpecificGraph;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +17,7 @@ public class PhosphoNetworks extends FileServer
 {
 	static PhosphoNetworks instance;
 
-	static PhosphoGraph graph;
+	static SiteSpecificGraph graph;
 
 	public static PhosphoNetworks get()
 	{
@@ -26,7 +25,7 @@ public class PhosphoNetworks extends FileServer
 		return instance;
 	}
 
-	public PhosphoGraph getGraph()
+	public SiteSpecificGraph getGraph()
 	{
 		return graph;
 	}
@@ -48,7 +47,7 @@ public class PhosphoNetworks extends FileServer
 	@Override
 	public boolean load() throws IOException
 	{
-		graph = new PhosphoGraph("PhosphoNetworks", SignedType.PHOSPHORYLATES.getTag());
+		graph = new SiteSpecificGraph("PhosphoNetworks", SignedType.PHOSPHORYLATES.getTag());
 
 		Scanner scanner = new Scanner(new File(locateInBase(getLocalFilenames()[0])));
 		String target = null;
@@ -82,7 +81,10 @@ public class PhosphoNetworks extends FileServer
 
 	public static void main(String[] args)
 	{
-		PhosphoGraph pn = get().getGraph();
+		SiteSpecificGraph pn = get().getGraph();
+
+		pn.write("/Users/ozgun/Documents/Data/PathwayCommonsV12/PhosphoNetworks.sif");
+
 		boolean contains = pn.getDownstream("MAPK14").contains("MAPKAPK2");
 		System.out.println("contains = " + contains);
 	}

@@ -4,12 +4,11 @@ import org.panda.resource.FileServer;
 import org.panda.resource.HGNC;
 import org.panda.resource.UniProtSequence;
 import org.panda.resource.signednetwork.SignedType;
-import org.panda.utility.graph.PhosphoGraph;
+import org.panda.utility.graph.SiteSpecificGraph;
 import org.panda.utility.statistics.UniquePrinter;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -23,7 +22,7 @@ public class NetworKIN extends FileServer
 {
 	static NetworKIN instance;
 
-	static PhosphoGraph graph;
+	static SiteSpecificGraph graph;
 
 	static Map<String, String> exceptionMapping;
 
@@ -33,7 +32,7 @@ public class NetworKIN extends FileServer
 		return instance;
 	}
 
-	public PhosphoGraph getGraph()
+	public SiteSpecificGraph getGraph()
 	{
 		return graph;
 	}
@@ -54,7 +53,7 @@ public class NetworKIN extends FileServer
 	public boolean load() throws IOException
 	{
 		UniquePrinter up = new UniquePrinter();
-		graph = new PhosphoGraph("NetworKIN", SignedType.PHOSPHORYLATES.getTag());
+		graph = new SiteSpecificGraph("NetworKIN", SignedType.PHOSPHORYLATES.getTag());
 
 		Scanner scanner = new Scanner(new File(locateInBase(getLocalFilenames()[0])));
 
@@ -117,7 +116,7 @@ public class NetworKIN extends FileServer
 
 	public static void main(String[] args)
 	{
-		PhosphoGraph pn = get().getGraph();
+		SiteSpecificGraph pn = get().getGraph();
 //		pn.cropToNeighborhood(Collections.singleton("FLT3"));
 //		pn.write("/home/ozgun/Documents/Temp/FLT3-phos.sif");
 

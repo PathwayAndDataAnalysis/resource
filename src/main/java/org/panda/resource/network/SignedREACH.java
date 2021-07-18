@@ -30,7 +30,7 @@ public class SignedREACH extends SignedPC
 		Map<SignedType, DirectedGraph> map = new HashMap<>();
 		for (SignedType type : SignedType.values())
 		{
-			if (type.isPhospho())
+			if (type.isSiteSpecific())
 			{
 				map.put(type, getGraph(type));
 			}
