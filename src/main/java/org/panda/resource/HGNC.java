@@ -225,10 +225,13 @@ public class HGNC extends FileServer
 
 	public static void main(String[] args)
 	{
-		System.out.println(get().getAllSymbols().size());
+//		System.out.println(get().getAllSymbols().size());
 
 //		convertSymbols();
 //		convertFile("/home/ozgun/Data/Aslan/platelet-lysine-methylation/140-uniprot.txt");
+
+		String symbol = get().getSymbol("H2AFX");
+		System.out.println("symbol = " + symbol);
 	}
 
 	private static void convertFile(String file)
