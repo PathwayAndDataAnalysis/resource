@@ -26,7 +26,7 @@ public class NetworKIN extends FileServer
 
 	static Map<String, String> exceptionMapping;
 
-	public static NetworKIN get()
+	public static synchronized NetworKIN get()
 	{
 		if (instance == null) instance = new NetworKIN();
 		return instance;

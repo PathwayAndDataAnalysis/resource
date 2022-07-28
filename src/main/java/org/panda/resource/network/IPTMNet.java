@@ -27,7 +27,7 @@ public class IPTMNet extends FileServer
 
 	Map<SignedType, SiteSpecificGraph> graphs;
 
-	public static IPTMNet get()
+	public static synchronized IPTMNet get()
 	{
 		if (instance == null) instance = new IPTMNet();
 		return instance;
@@ -96,7 +96,7 @@ public class IPTMNet extends FileServer
 
 	public static void main(String[] args)
 	{
-		BufferedWriter writer = FileUtil.newBufferedWriter("/Users/ozgun/Documents/Data/PathwayCommonsV12/IPTMNet.sif");
+		BufferedWriter writer = FileUtil.newBufferedWriter("/home/ozgunbabur/Data/IPTMNet.sif");
 		for (SignedType type : SignedType.values())
 		{
 			SiteSpecificGraph graph = get().getGraph(type);

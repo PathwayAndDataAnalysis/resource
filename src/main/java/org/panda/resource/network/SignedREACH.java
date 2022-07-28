@@ -19,7 +19,7 @@ public class SignedREACH extends SignedPC
 {
 	private static SignedREACH instance;
 
-	public static SignedREACH get()
+	public static synchronized SignedREACH get()
 	{
 		if (instance == null) instance = new SignedREACH();
 		return instance;

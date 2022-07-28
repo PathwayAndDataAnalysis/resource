@@ -202,6 +202,9 @@ public class UniProtSequence extends FileServer
 //		int startLocation = get().getStartLocation("P0DP23", "vFDk".toUpperCase());
 //		System.out.println("startLocation = " + startLocation);
 
+		String sym = "UL38";
+		Map<String, String> names = get().getNamesOfSymbol(sym);
+		System.out.println("names = " + names);
 //		System.out.println(get().getSeqAround("P0DP23", 80, 5));
 
 //		countAAs();

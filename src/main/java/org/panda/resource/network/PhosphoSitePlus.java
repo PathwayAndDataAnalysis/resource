@@ -9,6 +9,7 @@ import org.panda.utility.graph.SiteSpecificGraph;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -25,7 +26,7 @@ public class PhosphoSitePlus extends FileServer
 
 	Map<SignedType, SiteSpecificGraph> graphs;
 
-	public static PhosphoSitePlus get()
+	public static synchronized PhosphoSitePlus get()
 	{
 		if (instance == null) instance = new PhosphoSitePlus();
 		return instance;
@@ -44,7 +45,7 @@ public class PhosphoSitePlus extends FileServer
 	@Override
 	public String[] getLocalFilenames()
 	{
-		return new String[]{"psp-regulatory-sites", "psp-prot-name-to-gene-symbol.txt"};
+		return new String[]{"psp-regulatory-sites", "psp-prot-name-to-gene-symbol.txt", "psp-Kinase_Substrate_Dataset"};
 	}
 
 	@Override
@@ -136,10 +137,39 @@ public class PhosphoSitePlus extends FileServer
 			}
 		});
 
+		SiteSpecificGraph graph = graphs.get(SignedType.PHOSPHORYLATES);
+		getResourceAsStream(getLocalFilenames()[2], StandardCharsets.ISO_8859_1).skip(4).map(l -> l.split("\t"))
+			.filter(t -> t[3].equals("human") && t[8].equals("human"))
+			.filter(t -> !t[0].isEmpty() && !t[7].isEmpty()).forEach(t ->
+			{
+				String source = t[0];
+				String target = t[7];
+				String site = t[9];
+
+				graph.putRelation(source, target, Collections.emptySet(), site);
+			});
+
 		return true;
 	}
 
 	public static void main(String[] args)
+	{
+//		writeAsSif();
+
+		printUpstream("XRCC1");
+	}
+
+	private static void printUpstream(String target)
+	{
+		SiteSpecificGraph graph = get().getGraph(SignedType.DEPHOSPHORYLATES);
+		Set<String> upstreamSet = graph.getUpstream(target);
+		for (String s : upstreamSet)
+		{
+			System.out.println(s + "\t" + graph.getSites(s, target));
+		}
+	}
+
+	private static void writeAsSif()
 	{
 		BufferedWriter writer = FileUtil.newBufferedWriter("/Users/ozgun/Documents/Data/PathwayCommonsV12/PhosphoSitePlus.sif");
 		for (SignedType type : SignedType.values())

@@ -95,7 +95,8 @@ public class OncoKB extends FileServer
 	{
 		variantData = new HashMap<>();
 
-		getResourceAsStream(getLocalFilenames()[0], StandardCharsets.ISO_8859_1).skip(1).map(l -> l.split("\t")).forEach(t ->
+		getResourceAsStream(getLocalFilenames()[0], StandardCharsets.ISO_8859_1).skip(1).map(l -> l.split("\t"))
+			.filter(t -> t.length > 1).forEach(t ->
 		{
 			if (!variantData.containsKey(t[0])) variantData.put(t[0], new HashMap<>());
 

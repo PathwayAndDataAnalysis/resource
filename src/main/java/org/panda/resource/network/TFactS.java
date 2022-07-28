@@ -32,7 +32,7 @@ public class TFactS extends FileServer
 	private DirectedGraph negative;
 	private DirectedGraph unsigned;
 
-	public static TFactS get()
+	public static synchronized TFactS get()
 	{
 		if (instance == null) instance = new TFactS();
 		return instance;

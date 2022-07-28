@@ -19,7 +19,7 @@ public class PhosphoNetworks extends FileServer
 
 	static SiteSpecificGraph graph;
 
-	public static PhosphoNetworks get()
+	public static synchronized PhosphoNetworks get()
 	{
 		if (instance == null) instance = new PhosphoNetworks();
 		return instance;
@@ -83,9 +83,9 @@ public class PhosphoNetworks extends FileServer
 	{
 		SiteSpecificGraph pn = get().getGraph();
 
-		pn.write("/Users/ozgun/Documents/Data/PathwayCommonsV12/PhosphoNetworks.sif");
+//		pn.write("/Users/ozgun/Documents/Data/PathwayCommonsV12/PhosphoNetworks.sif");
 
-		boolean contains = pn.getDownstream("MAPK14").contains("MAPKAPK2");
+		boolean contains = pn.getDownstream("PARP1").contains("XRCC1");
 		System.out.println("contains = " + contains);
 	}
 }

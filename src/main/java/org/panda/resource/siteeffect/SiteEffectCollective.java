@@ -128,14 +128,14 @@ public class SiteEffectCollective
 
 	public static void main(String[] args) throws IOException
 	{
-		SiteEffectCollective sec = new SiteEffectCollective();
-		System.out.println(sec.getEffect("SMAD3", "T8", Feature.PHOSPHORYLATION));
-//		writeToFile();
+//		SiteEffectCollective sec = new SiteEffectCollective();
+//		System.out.println(sec.getEffect("SMAD3", "T8", Feature.PHOSPHORYLATION));
+		writeToFile();
 	}
 
 	public static void writeToFile() throws IOException
 	{
-		BufferedWriter writer = Files.newBufferedWriter(Paths.get("/home/ozgun/Documents/Temp/site-effects.txt"));
+		BufferedWriter writer = Files.newBufferedWriter(Paths.get("/home/ozgunbabur/Data/site-effects.txt"));
 
 		Set<String> genes = new HashSet<>();
 		SiteEffectCollective sec = new SiteEffectCollective();

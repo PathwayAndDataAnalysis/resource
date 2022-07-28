@@ -29,7 +29,7 @@ public class TRRUST extends FileServer
 	private DirectedGraph positive;
 	private DirectedGraph negative;
 
-	public static TRRUST get()
+	public static synchronized TRRUST get()
 	{
 		if (instance == null) instance = new TRRUST();
 		return instance;

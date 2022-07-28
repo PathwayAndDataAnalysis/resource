@@ -19,7 +19,7 @@ public class RhoGEF extends FileServer
 
 	static DirectedGraph graph;
 
-	public static RhoGEF get()
+	public static synchronized RhoGEF get()
 	{
 		if (instance == null) instance = new RhoGEF();
 		return instance;

@@ -25,7 +25,7 @@ public class SignedPC extends PathwayCommons
 {
 	private static SignedPC instance;
 
-	public static SignedPC get()
+	public synchronized static SignedPC get()
 	{
 		if (instance == null) instance = new SignedPC();
 		return instance;
