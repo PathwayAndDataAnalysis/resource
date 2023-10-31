@@ -129,10 +129,22 @@ public class UniProtSequence extends FileServer {
 		 */
         int max = ((prefixLen > suffixLen ? prefixLen : suffixLen) * 2) + 1;
 
+        // max/2 is how many you want to left/right of central position
+        // if you want k to the right, and you are at the kth position or lesser, this is impossible
+        if(max/2 >= location){
+            return null;
+        }
+
+        /*
+        The call to getSeqAround takes the width as an argument. Consider, if the width/2 = k,
+        then there will be k amino acids to the left and to the right.
+         */
+
         // Will take an odd-length as argument, and return sequence of that length
         // centered around location
 
         String seq = getSeqAround(idOrName, location, max);
+
 
 		/*
 		This occurs, for example, when the location is at the beggining(or end) of the amino
