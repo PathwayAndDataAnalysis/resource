@@ -5,6 +5,7 @@
 
 package org.panda.resource;
 
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
@@ -129,6 +130,19 @@ public class UniProtSequence extends FileServer {
 		 */
         int max = ((prefixLen > suffixLen ? prefixLen : suffixLen) * 2) + 1;
 
+
+
+// max/2 is how many you want to left/right of central position
+        // if you want k to the right, and you are at the kth position or lesser, this is impossible
+        if(max/2 >= location){
+            return null;
+        }
+
+        /*
+        The call to getSeqAround takes the width as an argument. Consider, if the width/2 = k,
+        then there will be k amino acids to the left and to the right.
+         */
+
         // Will take an odd-length as argument, and return sequence of that length
         // centered around location
 
@@ -189,7 +203,11 @@ public class UniProtSequence extends FileServer {
                 this.nameToID.put(name, id);
                 sequence = new StringBuilder();
                 int oInd = line.indexOf(" OX=");
-                String organism = line.substring(oInd + 4, line.indexOf(" ", oInd + 4));
+
+
+                String organism = line. substring(oInd + 4, line.indexOf(" ", oInd + 4));
+
+
                 int sInd = line.indexOf(" GN=");
                 if (sInd > 0) {
                     String symbol = line.substring(sInd + 4, line.indexOf(" ", sInd + 4));
@@ -202,8 +220,10 @@ public class UniProtSequence extends FileServer {
                 }
             } else {
                 sequence.append(line);
+
             }
         }
+
 
         reader.close();
         return true;
