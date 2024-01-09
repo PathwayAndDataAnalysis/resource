@@ -204,29 +204,9 @@ public class UniProtSequence extends FileServer {
                 sequence = new StringBuilder();
                 int oInd = line.indexOf(" OX=");
 
-                /*
-                System.out.println("\n New line of printing");
-                System.out.println(oInd);
-                System.out.println(line);
-
-                 */
-
-                /*
-                What is the issue here?
-                 */
-
-                /*
-                if(line.indexOf(" ", oInd + 4) <= -1){
-                    System.out.println(line);
-                    continue;
-                }
-
-                 */
 
                 String organism = line. substring(oInd + 4, line.indexOf(" ", oInd + 4));
 
-               // System.out.println(organism);
-               // System.out.println("");
 
                 int sInd = line.indexOf(" GN=");
                 if (sInd > 0) {
