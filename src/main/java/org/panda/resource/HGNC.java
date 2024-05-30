@@ -138,9 +138,9 @@ public class HGNC extends FileServer
 	@Override
 	public String[] getDistantURLs()
 	{
-		return new String[]{"https://www.genenames.org/cgi-bin/download?col=gd_hgnc_id&col=gd_app_sym&col=gd_prev_sym" +
-			"&col=gd_aliases&col=gd_pub_chrom_map&col=family.name&col=md_prot_id&status=Approved&status_opt=2&where=&" +
-			"order_by=gd_app_sym_sort&format=text&limit=&hgnc_dbtag=on&submit=submit"};
+		return new String[]{"https://www.genenames.org/cgi-bin/download/custom?col=gd_hgnc_id&col=gd_app_sym" +
+			"&col=gd_prev_sym&col=gd_aliases&col=gd_pub_chrom_map&col=family.name&col=md_prot_id&status=Approved" +
+			"&hgnc_dbtag=on&order_by=gd_app_sym_sort&format=text&submit=submit"};
 	}
 
 	@Override
