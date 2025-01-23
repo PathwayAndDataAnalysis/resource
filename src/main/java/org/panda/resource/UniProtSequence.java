@@ -39,13 +39,13 @@ public class UniProtSequence extends FileServer {
     }
 
     public int getStartLocation(String nameOrID, String peptide) {
-        String id = (String) this.nameToID.get(nameOrID);
+        String id = this.nameToID.get(nameOrID);
         if (id == null && this.idToSeq.containsKey(nameOrID)) {
             id = nameOrID;
         }
 
         if (id != null) {
-            String seq = (String) this.idToSeq.get(id);
+            String seq = this.idToSeq.get(id);
 
             assert seq != null;
 
@@ -59,13 +59,13 @@ public class UniProtSequence extends FileServer {
         if (loc < 1) {
             throw new IllegalArgumentException("Location cannot be smaller than 1. loc = " + loc);
         } else {
-            String id = (String) this.nameToID.get(nameOrID);
+            String id = this.nameToID.get(nameOrID);
             if (id == null && this.idToSeq.containsKey(nameOrID)) {
                 id = nameOrID;
             }
 
             if (id != null) {
-                String seq = (String) this.idToSeq.get(id);
+                String seq = this.idToSeq.get(id);
 
                 assert seq != null;
 
@@ -92,7 +92,7 @@ public class UniProtSequence extends FileServer {
             }
 
             if (id != null) {
-                String seq = (String) this.idToSeq.get(id);
+                String seq = this.idToSeq.get(id);
 
                 assert seq != null;
 
@@ -154,11 +154,11 @@ public class UniProtSequence extends FileServer {
     }
 
     public String getSymbolOfName(String name) {
-        return (String) this.nameToSymbol.get(name);
+        return this.nameToSymbol.get(name);
     }
 
     public Map<String, String> getNamesOfSymbol(String symbol) {
-        return (Map) this.symbolToNames.get(symbol);
+        return this.symbolToNames.get(symbol);
     }
 
     public String getNameOfSymbol(String symbol, String organism) {
@@ -210,9 +210,13 @@ public class UniProtSequence extends FileServer {
     }
 
     public static void main(String[] args) {
-        String sym = "UL38";
-        Map<String, String> names = get().getNamesOfSymbol(sym);
-        System.out.println("names = " + names);
+//        String sym = "TP53";
+//        Map<String, String> names = get().getNamesOfSymbol(sym);
+//        System.out.println("names = " + names);
+
+        int loc = get().getStartLocation("Q8VHX6", "FPAVFGDFLGRERLGSFGSITRQQEGEASSQ");
+        if (loc > 0) loc += 15;
+        System.out.println("loc = " + (loc + 15));
     }
 
     private static void countAAs() {

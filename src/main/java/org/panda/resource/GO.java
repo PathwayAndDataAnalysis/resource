@@ -1,9 +1,13 @@
 package org.panda.resource;
 
 import org.panda.utility.CollectionUtil;
+import org.panda.utility.FileUtil;
+import org.panda.utility.SIFFileUtil;
+import org.panda.utility.TermCounter;
 import org.panda.utility.statistics.FishersExactTest;
 import org.panda.utility.statistics.GeneSetEnrichment;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -85,7 +89,7 @@ public class GO extends FileServer
 	public void printTermsOfKeyword(String keyword)
 	{
 		Map<String, String> map = getTermsContaining(keyword);
-		map.forEach((id,  name) -> System.out.println(name + "\t" + id));
+		map.forEach((id,  name) -> System.out.println(id + "\t" + name));
 	}
 
 	public void printAssociatedTerms(Set<String> genes, Set<String> ignoreTerms, Set<String> ignoreGenesOfTerms)
@@ -157,7 +161,7 @@ public class GO extends FileServer
 
 	public Set<String> getGenesContainingKeywordInTermNames(String keyword)
 	{
-		return geneToGO.keySet().stream().filter(g -> geneToGO.get(g).stream().map(idToName::get)
+		return geneToGO.keySet().stream().filter(g -> geneToGO.get(g).stream().filter(idToName::containsKey).map(idToName::get)
 			.anyMatch(name -> name.contains(keyword))).collect(Collectors.toSet());
 	}
 
@@ -176,6 +180,45 @@ public class GO extends FileServer
 			.anyMatch(name -> keywordsToKeep.stream().anyMatch(name::contains) &&
 				keywordsToSkip.stream().noneMatch(name::contains)))
 			.collect(Collectors.toSet());
+	}
+
+	public void writeTermsContainingKeywordForGivenGenes(Set<String> genes, Set<String> keywordsToKeep, Set<String> keywordsToSkip, String outFile)
+	{
+		Map<String, Set<String>> goToSubset = new HashMap<>();
+
+		idToName.keySet().stream().filter(id -> goToGene.containsKey(id) && !goToGene.get(id).isEmpty())
+			.filter(id -> contains(idToName.get(id), keywordsToKeep) && !contains(idToName.get(id), keywordsToSkip))
+			.forEach(id ->
+		{
+			Set<String> hit = CollectionUtil.getIntersection(genes, goToGene.get(id));
+			if (!hit.isEmpty())
+			{
+				goToSubset.put(id, hit);
+			}
+		});
+
+		List<String> ids = new ArrayList<>(goToSubset.keySet());
+		ids.sort((o1, o2) -> Integer.compare(goToSubset.get(o2).size(), goToSubset.get(o1).size()));
+
+		BufferedWriter writer = FileUtil.newBufferedWriter(outFile);
+		FileUtil.write("ID\tTerm\tGenes", writer);
+
+		for (String id : ids)
+		{
+			FileUtil.lnwrite(id + "\t" + idToName.get(id) + "\t", writer);
+			goToSubset.get(id).stream().sorted().forEach(gene -> FileUtil.write(gene + " ", writer));
+		}
+
+		FileUtil.closeWriter(writer);
+	}
+
+	public boolean contains(String s, Set<String> q)
+	{
+		for (String query : q)
+		{
+			if (s.contains(query)) return true;
+		}
+		return false;
 	}
 
 	/**
@@ -315,12 +358,17 @@ public class GO extends FileServer
 //		CollectionUtil.printVennCounts(genes1, genes2);
 //		genes2.stream().sorted().forEach(System.out::println);
 
-//		get().printTermsOfKeyword("histone deacetylase activity");
+		get().printTermsOfKeyword("calcium");
 //		get().printTermsOfKeyword("histone acetyltransferase activity");
-//		get().getGenesContainingKeywordInTermNames("histone acetyltransferase activity").stream().sorted().forEach(System.out::println);
+		get().getGenesContainingKeywordInTermNames("calcium").stream().sorted().forEach(System.out::println);
 //		get().getGenesContainingKeywordInTermNames("regulation of histone deacetylase activity").stream().sorted().forEach(System.out::println);
 
-		get().getGenesContainingKeywordInTermNames(new HashSet<>(Arrays.asList("histone acetyltransferase activity", "histone deacetylase activity")), new HashSet<>(Arrays.asList("regulation of"))).forEach(System.out::println);
+//		get().getGenesContainingKeywordInTermNames(new HashSet<>(Arrays.asList("histone acetyltransferase activity", "histone deacetylase activity")), new HashSet<>(Arrays.asList("regulation of"))).forEach(System.out::println);
+
+//		Set<String> genes = SIFFileUtil.getGenesInSIFFile("/home/ozgunbabur/Downloads/temp/causative-network-only.sif");
+//		get().writeTermsContainingKeywordForGivenGenes(genes, new HashSet<>(Arrays.asList("calcium", "viral", "virus")), Collections.emptySet(), "/home/ozgunbabur/Downloads/temp/go.txt");
+
+//		get().printAverageSetSize();
 	}
 
 	private static List<String> readPanCanGenes() throws IOException
@@ -363,5 +411,28 @@ public class GO extends FileServer
 		}
 		System.out.println();
 		System.out.println("match.size() = " + match.size());
+	}
+
+	public void printAverageSetSize()
+	{
+		int[] cc = new int[]{0, 0};
+		TermCounter tc = new TermCounter();
+		goToGene.forEach((s, strings) ->
+		{
+			if (!strings.isEmpty())
+			{
+				cc[0]++;
+				cc[1] += strings.size();
+
+				for (String gene : strings)
+				{
+					tc.addTerm(gene);
+				}
+			}
+		});
+
+		System.out.println(cc[1] / (double) cc[0]);
+		System.out.println("cc = " + Arrays.toString(cc));
+		System.out.println("tc.getMeanCountPerTerm() = " + tc.getMeanCountPerTerm());
 	}
 }
