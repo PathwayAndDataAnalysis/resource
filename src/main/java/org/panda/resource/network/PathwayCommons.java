@@ -184,7 +184,8 @@ public class PathwayCommons extends FileServer
 	@Override
 	public String[] getDistantURLs() { try
 	{
-		String base = "https://www.pathwaycommons.org/archives/PC2/v12/";
+//		String base = "https://www.pathwaycommons.org/archives/PC2/v12/";
+		String base = "https://download.baderlab.org/PathwayCommons/PC2/v12/";
 		String partial = "All.hgnc.txt.gz";
 
 		Scanner sc = new Scanner(new URL(base).openStream());

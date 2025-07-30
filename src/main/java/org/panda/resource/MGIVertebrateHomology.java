@@ -1,5 +1,8 @@
 package org.panda.resource;
 
+import org.panda.utility.CollectionUtil;
+import org.panda.utility.FileUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -144,6 +147,18 @@ public class MGIVertebrateHomology extends FileServer
 
 	public static void main(String[] args)
 	{
-		System.out.println(get().getCorrespondingHumanSymbols("Akt1", Organism.MOUSE));
+		Set<String> terms = FileUtil.getTermsInTabDelimitedColumn("/home/ozgunbabur/Data/Linden/LiverRNA/RNA seq/DESeq2/5_stz_veh_hfd_sed-stz_sglt2i_hfd_sed_31 removed/DESeq2_output/DESeq2_stats_allGenes_CookTested.txt", 0, 1);
+		Map<String, String> map1 = new HashMap<>();
+		terms.stream().map(s -> s.replaceAll("\"", "")).forEach(s ->
+		{
+			Set<String> set = get().getCorrespondingHumanSymbols(s, Organism.RAT);
+			if (set.size() == 1) map1.put(s, set.iterator().next());
+			else if (set.contains(s.toUpperCase())) map1.put(s, s.toUpperCase());
+		});
+		System.out.println("map1 = " + map1.size());
+		Map<String, Integer> cMap = new HashMap<>();
+		map1.forEach((s1, s2) -> cMap.put(s2, cMap.getOrDefault(s2, 0) + 1));
+		long count = map1.keySet().stream().filter(s -> cMap.get(map1.get(s)) == 1).count();
+		System.out.println("count = " + count);
 	}
 }

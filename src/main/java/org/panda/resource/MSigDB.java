@@ -103,6 +103,11 @@ public class MSigDB extends FileServer
 		geneSets.keySet().stream().filter(filter::select).forEach(System.out::println);
 	}
 
+	public Map<String, Set<String>> getGeneSets()
+	{
+		return geneSets;
+	}
+
 	public String getURL(String name)
 	{
 		return urls.get(name);

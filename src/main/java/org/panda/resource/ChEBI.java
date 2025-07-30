@@ -84,12 +84,13 @@ public class ChEBI extends FileServer
 	public static void main(String[] args) throws IOException
 	{
 //		for (String s : "CHEBI:17295, CHEBI:16977, CHEBI:17196, CHEBI:17191, CHEBI:16414, CHEBI:17203, CHEBI:16828, CHEBI:15603, CHEBI:16015".split(", "))
-//		{
-//			System.out.println(s + "\t" + get().getName(s));
-//		}
+		for (String s : "CHEBI:72961".split(", "))
+		{
+			System.out.println(s + "\t" + get().getName(s));
+		}
 
 //		replaceIDsWithNameInSIF("/home/babur/Documents/Analyses/MrOS/links-between-metabolites-and-proteins.sif");
-		get().dumpData("C:\\Users\\Owner\\Projects\\ChEBI.txt");
+//		get().dumpData("C:\\Users\\Owner\\Projects\\ChEBI.txt");
 	}
 
 	private static void replaceIDsWithNameInSIF(String filename) throws IOException
