@@ -15,6 +15,7 @@ import org.panda.utility.TermCounter;
 public class UniProtSequence extends FileServer {
     private static UniProtSequence instance;
     private Map<String, String> nameToID;
+    private Map<String, String> idToName;
     private Map<String, String> nameToSymbol;
     private Map<String, Map<String, String>> symbolToNames;
     private Map<String, String> idToSeq;
@@ -78,6 +79,21 @@ public class UniProtSequence extends FileServer {
         }
     }
 
+    public String getSequence(String nameOrID)
+    {
+        String id = this.nameToID.get(nameOrID);
+        if (id == null && this.idToSeq.containsKey(nameOrID))
+        {
+            id = nameOrID;
+        }
+
+        if (id != null)
+        {
+            return this.idToSeq.get(id);
+        }
+        return null;
+    }
+
     public String getSeqAround(String nameOrID, int loc, int width) {
         if (loc < 1) {
             throw new IllegalArgumentException("Location cannot be smaller than 1. loc = " + loc);
@@ -104,6 +120,24 @@ public class UniProtSequence extends FileServer {
 
             return null;
         }
+    }
+    public String getAAAt(String nameOrID, int loc) {
+        String id = this.nameToID.get(nameOrID);
+        if (id == null && this.idToSeq.containsKey(nameOrID)) {
+            id = nameOrID;
+        }
+
+        if (id != null) {
+            String seq = this.idToSeq.get(id);
+
+            assert seq != null;
+
+            if (loc <= seq.length()) {
+                return Character.toString(seq.charAt(loc - 1));
+            }
+        }
+
+        return null;
     }
 
     public String getIDOfName(String uniprotName) {
@@ -165,8 +199,19 @@ public class UniProtSequence extends FileServer {
         return this.symbolToNames.containsKey(symbol) ? (String) ((Map) this.symbolToNames.get(symbol)).getOrDefault(organism, (Object) null) : null;
     }
 
+    public String getSymbolOfID(String id)
+    {
+        String name = this.idToName.get(id);
+        if (name != null)
+        {
+            return this.nameToSymbol.get(name);
+        }
+        return null;
+    }
+
     public boolean load() throws IOException {
         this.nameToID = new HashMap();
+        this.idToName = new HashMap();
         this.nameToSymbol = new HashMap();
         this.symbolToNames = new HashMap();
         this.idToSeq = new HashMap();
@@ -187,6 +232,7 @@ public class UniProtSequence extends FileServer {
                 id = t[1];
                 name = t[2];
                 this.nameToID.put(name, id);
+                this.idToName.put(id, name);
                 sequence = new StringBuilder();
                 int oInd = line.indexOf(" OX=");
                 String organism = line.substring(oInd + 4, line.indexOf(" ", oInd + 4));

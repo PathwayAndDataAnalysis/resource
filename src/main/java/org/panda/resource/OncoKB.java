@@ -2,6 +2,7 @@ package org.panda.resource;
 
 import org.panda.utility.ArrayUtil;
 import org.panda.utility.CollectionUtil;
+import org.panda.utility.FileUtil;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -123,8 +124,9 @@ public class OncoKB extends FileServer
 
 	public static void main(String[] args) throws IOException
 	{
-		CollectionUtil.printVennCounts(get().oncogenes, get().tumorSuppressors);
+//		CollectionUtil.printVennCounts(get().oncogenes, get().tumorSuppressors);
 //		writeHighlightFile("/Users/ozgun/Documents/Analyses/CPTAC-LSCC-3.2/oncokb.highlight");
+		printReportForCausalPathFile("/home/ozgunbabur/Analyses/TCGA-TP53/results.txt");
 	}
 
 	//----SMMART related-----
@@ -178,5 +180,37 @@ public class OncoKB extends FileServer
 		}
 
 		writer.close();
+	}
+
+	private static void printReportForCausalPathFile(String resultFile)
+	{
+		Set<String> genes = new HashSet<>();
+		Set<String> ao = new HashSet<>();
+		Set<String> its = new HashSet<>();
+
+		FileUtil.linesTabbed(resultFile).filter(t -> t.length > 2).forEach(t ->
+		{
+			String gene = t[2];
+			if (genes.contains(gene)) return;
+			else genes.add(gene);
+
+			if (t[12].startsWith("-"))
+			{
+				if (OncoKB.get().isTumorSuppressorOnly(gene))
+				{
+					its.add(gene);
+					System.out.println(gene + " is an inactivated TS");
+				}
+			}
+			else if (OncoKB.get().isOncogeneOnly(gene))
+			{
+				ao.add(gene);
+				System.out.println(gene + " is an activated oncogene");
+			}
+		});
+		System.out.println("ao = " + ao.size());
+		ao.stream().sorted().forEach(g -> System.out.print(g + ", "));
+		System.out.println("\nits = " + its.size());
+		its.stream().sorted().forEach(g -> System.out.print(g + ", "));
 	}
 }

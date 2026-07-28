@@ -108,6 +108,11 @@ public class MSigDB extends FileServer
 		return geneSets;
 	}
 
+	public Set<String> getAllGenes()
+	{
+		return geneSets.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+	}
+
 	public String getURL(String name)
 	{
 		return urls.get(name);
@@ -219,9 +224,9 @@ public class MSigDB extends FileServer
 
 	public static void main(String[] args) throws IOException
 	{
-//		get().printSetsNameFiltered(name -> name.contains("TARGET_GENES"));
+		get().printSetsNameFiltered(name -> name.toLowerCase(Locale.ROOT).contains("cell_cycle_arrest"));
 //		writeHighlightFiles();
-		printMembers();
+//		printMembers();
 	}
 
 	private static void writeHighlightFiles() throws IOException
